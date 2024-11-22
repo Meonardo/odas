@@ -10,11 +10,11 @@ option(ODAS_FORCE_BIN_AND_LIB_DIRS "Force the installation of the odas library a
 option(ODAS_DISABLE_INSTALL "Disable the installation of the odas library and executables" OFF)
 
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PC_FFTW3 REQUIRED fftw3f)
-pkg_check_modules(PC_ALSA REQUIRED alsa)
-pkg_check_modules(PC_LIBCONFIG REQUIRED libconfig)
-pkg_check_modules(PC_PULSEAUDIO REQUIRED libpulse-simple)
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(PC_FFTW3 REQUIRED fftw3f)
+# pkg_check_modules(PC_ALSA REQUIRED alsa)
+# pkg_check_modules(PC_LIBCONFIG REQUIRED libconfig)
+# pkg_check_modules(PC_PULSEAUDIO REQUIRED libpulse-simple)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
@@ -199,12 +199,25 @@ add_library(odas SHARED
 )
 
 target_link_libraries(odas
-    ${PC_FFTW3_LIBRARIES}
-    ${PC_ALSA_LIBRARIES}
-    ${PC_LIBCONFIG_LIBRARIES}
-    ${PC_PULSEAUDIO_LIBRARIES}
+    ${LIBCONFIG}/lib/libconfig.so
+    ${FFTW3F}/lib/libfftw3f.so
+    ${FFTW3F}/lib/libfftw3f_threads.so
+    ${PULSEAUDIO}/lib/libpulse-simple.so
+    ${PULSEAUDIO}/lib/libpulse.so
+    ${PULSEAUDIO}/lib/pulseaudio/libpulsecommon-17.0.so
+    ${ALSA}/lib/libasound.so
+    ${SNDFILE}/lib/libsndfile.so
     m
     pthread
+)
+
+target_include_directories(odas
+    PRIVATE
+
+    ${LIBCONFIG}/include
+    ${ALSA}/include
+    ${FFTW3F}/include
+    ${PULSEAUDIO}/include
 )
 
 add_executable(odaslive
@@ -217,6 +230,14 @@ add_executable(odaslive
 )
 target_link_libraries(odaslive
     odas
+)
+target_include_directories(odaslive
+    PRIVATE
+
+    ${LIBCONFIG}/include
+    ${ALSA}/include
+    ${FFTW3F}/include
+    ${PULSEAUDIO}/include
 )
 
 add_executable(odasserver
