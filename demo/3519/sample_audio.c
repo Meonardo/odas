@@ -231,28 +231,23 @@ static FILE *sample_audio_open_file(ot_ai_chn ai_chn) {
   td_s32 ret;
 
   /* create file for save stream */
-#ifdef __LITEOS__
   ret = snprintf_s(asz_file_name, FILE_NAME_LEN, FILE_NAME_LEN - 1,
-                   "/sharefs/res_chn%d.pcm", ai_chn);
-#else
-  ret = snprintf_s(asz_file_name, FILE_NAME_LEN, FILE_NAME_LEN - 1,
-                   "res_chn%d.pcm", ai_chn);
-#endif
+                   "chn%d.pcm", ai_chn);
   if (ret < 0) {
     printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
-           "get res file name failed");
+           "get file name failed");
     return TD_NULL;
   }
 
   if (asz_file_name[0] == '\0') {
     printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
-           "res file name is NULL");
+           "file name is NULL");
     return TD_NULL;
   }
 
   if (strlen(asz_file_name) > (FILE_NAME_LEN - 1)) {
     printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
-           "res file name extra long");
+           "file name extra long");
     return TD_NULL;
   }
 
@@ -261,7 +256,9 @@ static FILE *sample_audio_open_file(ot_ai_chn ai_chn) {
     printf("%s: open file %s failed\n", __FUNCTION__, asz_file_name);
     return TD_NULL;
   }
+
   printf("open stream file: \"%s\" ok\n", asz_file_name);
+
   return fd;
 }
 
@@ -326,8 +323,8 @@ static td_void sample_audio_dmic_ai_to_file_init_params(ot_aio_attr *ai_attr,
   ai_attr->snd_mode = OT_AUDIO_SOUND_MODE_MONO;
   ai_attr->expand_flag = 0;
   ai_attr->frame_num = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
-  ai_attr->point_num_per_frame = 1024;
-  ai_attr->chn_cnt = 1; /* 2:chn num */
+  ai_attr->point_num_per_frame = SAMPLE_AUDIO_POINT_NUM_PER_FRAME;
+  ai_attr->chn_cnt = SAMPLE_AUDIO_AI_CHANNELS;
 
   *ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
   ai_attr->clk_share = 0;
