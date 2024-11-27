@@ -28,6 +28,25 @@ static td_void init_params(ot_aio_attr* ai_attr, ot_audio_dev* ai_dev,
   ai_attr->i2s_type = OT_AIO_I2STYPE_DMIC;
 }
 
+static td_s32 app_audio_select(td_s32 ai_fd, fd_set* read_fds) {
+  td_s32 ret;
+  struct timeval time_out_val;
+  time_out_val.tv_sec = 1;
+  time_out_val.tv_usec = 0;
+
+  FD_ZERO(read_fds);
+  FD_SET(ai_fd, read_fds);
+
+  ret = select(ai_fd + 1, read_fds, TD_NULL, TD_NULL, &time_out_val);
+  if (ret < 0) {
+    return TD_FAILURE;
+  } else if (ret == 0) {
+    printf("%s: get ai frame select time out\n", __FUNCTION__);
+    return TD_FAILURE;
+  }
+  return TD_SUCCESS;
+}
+
 td_s32 src_pcm_init(src_pcm_spec* obj) {
   td_s32 ret;
 
@@ -59,6 +78,40 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
     return ret;
   }
 
+  // init items
+  for (int i = 0; i < obj->chn; i++) {
+    obj->items[i].chn = i;
+    obj->items[i].ai_fd = -1;
+
+    if (obj->items[i].ai_fd < 0) {
+      printf("%s: ss_mpi_ai_get_fd failed with %d!\n", __FUNCTION__,
+             obj->items[i].ai_fd);
+      comm_audio_stop_ai(obj->ai_dev, obj->chn, TD_FALSE, TD_TRUE);
+      return obj->items[i].ai_fd;
+    }
+
+    ot_ai_chn_param ai_chn_para;
+    ret = ss_mpi_ai_get_chn_param(obj->ai_dev, i, &ai_chn_para);
+    if (ret != TD_SUCCESS) {
+      printf("%s: get ai chn param failed\n", __FUNCTION__);
+      return TD_FAILURE;
+    }
+    ai_chn_para.usr_frame_depth = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
+    ret = ss_mpi_ai_set_chn_param(obj->ai_dev, i, &ai_chn_para);
+    if (ret != TD_SUCCESS) {
+      printf("%s: set ai chn param failed, ret=0x%x\n", __FUNCTION__, ret);
+      return TD_FAILURE;
+    }
+
+    td_s32 ai_fd = ss_mpi_ai_get_fd(obj->ai_dev, i);
+    if (ai_fd < 0) {
+      printf("%s: get ai fd failed\n", __FUNCTION__);
+      return TD_FAILURE;
+    }
+
+    obj->items[i].ai_fd = ai_fd;
+  }
+
   return TD_SUCCESS;
 }
 
@@ -68,4 +121,38 @@ void src_pcm_destory(src_pcm_spec* obj) {
 
   // destory module
   comm_audio_exit();
+}
+
+td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
+  td_s32 ret;
+
+  ret = app_audio_select(item->ai_fd, &(item->read_fds));
+  if (ret != TD_SUCCESS) {
+    printf("%s: app_audio_select failed with %d!\n", __FUNCTION__, ret);
+    return TD_FAILURE;
+  }
+
+  if (FD_ISSET(item->ai_fd, &(item->read_fds))) {
+    /* get frame from ai chn */
+    (td_void) memset_s(&(item->aec_frm), sizeof(ot_aec_frame), 0,
+                       sizeof(ot_aec_frame));
+
+    ret = ss_mpi_ai_get_frame(obj->ai_dev, item->chn, &(item->frame),
+                              &(item->aec_frm), TD_FALSE);
+    if (ret != TD_SUCCESS) {
+      printf("%s: ss_mpi_ai_get_frame failed with %d!\n", __FUNCTION__, ret);
+      return TD_FAILURE;
+    }
+  }
+
+  return TD_SUCCESS;
+}
+
+void src_pcm_release_frame(src_pcm_spec* obj, src_pcm_item* item) {
+  td_s32 ret = ss_mpi_ai_release_frame(obj->ai_dev, item->chn, &(item->frame),
+                                       &(item->aec_frm));
+  if (ret != TD_SUCCESS) {
+    printf("%s: ss_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
+           __FUNCTION__, obj->ai_dev, item->chn, ret);
+  }
 }

@@ -453,7 +453,7 @@ int src_hops_process(src_hops_obj *obj) {
 
     case interface_customized_pcm:
 
-      rtnValue = src_hops_process_interface_pulseaudio(obj);
+      rtnValue = src_hops_process_interface_customized_pcm(obj);
 
       break;
 
@@ -522,7 +522,23 @@ int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
   return rtnValue;
 }
 
-int src_hops_process_interface_customized_pcm(src_hops_obj *obj) { return 0; }
+int src_hops_process_interface_customized_pcm(src_hops_obj *obj) { 
+    for (int i = 0; i < obj->sps.chn; i++) {
+        src_pcm_item *item = &(obj->sps.items[i]);
+        if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
+          return -1;
+        }
+
+        td_u8 *data = item->frame.virt_addr[0];
+
+        // copy this channel data to buffer
+        /// TODO:
+
+        // release the frame
+        src_pcm_release_frame(&(obj->sps), item);
+    }
+    return 0; 
+}
 
 int src_hops_process_interface_socket(src_hops_obj *obj) {
   unsigned int nBytesTotal;
