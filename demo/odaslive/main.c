@@ -1,5 +1,3 @@
-
-#include <alsa/asoundlib.h>
 #include <getopt.h>
 #include <odas/odas.h>
 #include <signal.h>
@@ -10,66 +8,6 @@
 #include "parameters.h"
 #include "profiler.h"
 #include "threads.h"
-
-static void list_alsa_cards_devices() {
-  int card = -1;  // Card index
-  int err;
-
-  printf("Listing ALSA sound cards and devices:\n");
-
-  // Iterate through sound cards
-  while (snd_card_next(&card) >= 0 && card >= 0) {
-    printf("Sound Card #%d:\n", card);
-
-    char card_name[32];
-    char card_longname[80];
-
-    // Get card short and long names
-    snd_card_get_name(card, &card_name[0]);
-    snd_card_get_longname(card, &card_longname[0]);
-
-    printf("  Short Name: %s\n", card_name);
-    printf("  Long Name: %s\n", card_longname);
-
-    // Open control interface for this card
-    snd_ctl_t *ctl;
-    char ctl_name[32];
-    sprintf(ctl_name, "hw:%d", card);
-
-    if ((err = snd_ctl_open(&ctl, ctl_name, 0)) < 0) {
-      fprintf(stderr, "Error opening control interface for card %d: %s\n", card,
-              snd_strerror(err));
-      continue;
-    }
-
-    // Enumerate PCM devices
-    int device = -1;
-    while (snd_ctl_pcm_next_device(ctl, &device) >= 0 && device >= 0) {
-      printf("    PCM Device #%d:\n", device);
-
-      snd_pcm_info_t *pcm_info;
-      snd_pcm_info_alloca(&pcm_info);
-
-      snd_pcm_info_set_device(pcm_info, device);
-      snd_pcm_info_set_subdevice(pcm_info, 0);  // Default subdevice
-      snd_pcm_info_set_stream(pcm_info,
-                              SND_PCM_STREAM_CAPTURE);  // For capture devices
-
-      if ((err = snd_ctl_pcm_info(ctl, pcm_info)) < 0) {
-        printf("      No capture information: %s\n", snd_strerror(err));
-        continue;
-      }
-
-      printf("      Device Name: %s\n", snd_pcm_info_get_name(pcm_info));
-      printf("      Device ID: %s\n", snd_pcm_info_get_id(pcm_info));
-      printf("      Subdevices: %d/%d\n",
-             snd_pcm_info_get_subdevices_avail(pcm_info),
-             snd_pcm_info_get_subdevices_count(pcm_info));
-    }
-
-    snd_ctl_close(ctl);
-  }
-}
 
 // +----------------------------------------------------------+
 // | Variables                                                |
@@ -131,9 +69,6 @@ void sighandler(int signum) {
 // +----------------------------------------------------------+
 
 int main(int argc, char *argv[]) {
-  // list local cards and devices
-  list_alsa_cards_devices();
-
   // +------------------------------------------------------+
   // | Arguments                                            |
   // +------------------------------------------------------+

@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 echo "Current dir: $SCRIPT_DIR"
 

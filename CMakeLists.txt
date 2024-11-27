@@ -279,12 +279,21 @@ target_link_libraries(
 
     # math
     m
+
+    # odas library
+    odas
 )
 target_include_directories(
     odas3519
     PRIVATE
 
+    # Hi3519
     ${HI3519_ROOT}/include
+    
+    # odas library
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    
+    # internal
     ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio
 )
 target_compile_definitions(
