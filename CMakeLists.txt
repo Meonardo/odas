@@ -12,6 +12,8 @@ option(ODAS_INSTALL_EXECUTABLES "Install the odaslive and odasserver executables
 option(ODAS_FORCE_BIN_AND_LIB_DIRS "Force the installation of the odas library and executables in the bin and lib directories" ON)
 option(ODAS_DISABLE_INSTALL "Disable the installation of the odas library and executables" OFF)
 
+option(CUSTOM_PCM_SRC_SINK "Enable customized PCM source & sink" ON)
+
 
 # find_package(PkgConfig REQUIRED)
 # pkg_check_modules(PC_FFTW3 REQUIRED fftw3f)
@@ -194,14 +196,16 @@ set(SRC
     src/sink/snk_spectra.c
     src/sink/snk_tracks.c
     src/source/src_hops.c
-
 )
 
 add_library(odas SHARED
     ${SRC}
 )
 
-target_link_libraries(odas
+target_link_libraries(
+    odas
+    PUBLIC       
+
     ${LIBCONFIG}/lib/libconfig.so
     ${FFTW3F}/lib/libfftw3f.so
     ${FFTW3F}/lib/libfftw3f_threads.so
@@ -210,12 +214,15 @@ target_link_libraries(odas
     ${PULSEAUDIO}/lib/pulseaudio/libpulsecommon-17.0.so
     ${ALSA}/lib/libasound.so
     ${SNDFILE}/lib/libsndfile.so
+
     m
+
     pthread
 )
 
-target_include_directories(odas
-    PRIVATE
+target_include_directories(
+    odas
+    PUBLIC
 
     ${LIBCONFIG}/include
     ${ALSA}/include
@@ -223,7 +230,62 @@ target_include_directories(odas
     ${PULSEAUDIO}/include
 )
 
-add_executable(odaslive
+if (CUSTOM_PCM_SRC_SINK)
+    target_sources(
+        odas
+        PRIVATE
+
+        ${CMAKE_SOURCE_DIR}/src/comm/comm_audio.c
+        ${CMAKE_SOURCE_DIR}/include/odas/comm/comm_audio.h
+    )
+    target_link_libraries(
+        odas
+        PUBLIC
+
+        ${HI3519_ROOT}/lib/libsecurec.so
+        ${HI3519_ROOT}/lib/libmp3_enc.so
+        ${HI3519_ROOT}/lib/libmp3_lame.so
+        ${HI3519_ROOT}/lib/libmp3_dec.so
+        ${HI3519_ROOT}/lib/libvoice_engine.so
+        ${HI3519_ROOT}/lib/libupvqe.so
+        ${HI3519_ROOT}/lib/libdnvqe.so
+
+        # mpi
+        ${HI3519_ROOT}/lib/libhi_mpi_audio.so
+        ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
+        ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
+        ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
+
+        # aac
+        ${HI3519_ROOT}/lib/libaac_comm.so
+        ${HI3519_ROOT}/lib/libaac_dec.so
+        ${HI3519_ROOT}/lib/libaac_enc.so
+        ${HI3519_ROOT}/lib/libaac_sbr_dec.so
+        ${HI3519_ROOT}/lib/libaac_sbr_enc.so
+
+        # opus
+        ${HI3519_ROOT}/lib/libopus.so
+    )
+    target_include_directories(
+        odas
+        PUBLIC
+
+        # Hi3519
+        ${HI3519_ROOT}/include
+    )
+    target_compile_definitions(
+        odas
+        PUBLIC
+
+        OT_ACODEC_TYPE_INNER
+        CUSTOM_PCM_SRC_SINK
+    )
+endif () 
+
+# app
+add_executable(
+    odaslive
+
     demo/odaslive/main.c
     demo/odaslive/configs.c
     demo/odaslive/objects.c
@@ -231,76 +293,12 @@ add_executable(odaslive
     demo/odaslive/profiler.c
     demo/odaslive/threads.c
 )
-target_link_libraries(odaslive
-    odas
-)
-target_include_directories(odaslive
-    PRIVATE
 
-    ${LIBCONFIG}/include
-    ${ALSA}/include
-    ${FFTW3F}/include
-    ${PULSEAUDIO}/include
-)
-
-# Hi3519 audio app
-add_executable(odas3519
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio/comm_audio.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio/comm_audio.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/main.cpp
-)
 target_link_libraries(
-    odas3519
+    odaslive
     PRIVATE
 
-    ${HI3519_ROOT}/lib/libsecurec.so
-    ${HI3519_ROOT}/lib/libmp3_enc.so
-    ${HI3519_ROOT}/lib/libmp3_lame.so
-    ${HI3519_ROOT}/lib/libmp3_dec.so
-    ${HI3519_ROOT}/lib/libvoice_engine.so
-    ${HI3519_ROOT}/lib/libupvqe.so
-    ${HI3519_ROOT}/lib/libdnvqe.so
-
-    # mpi
-    ${HI3519_ROOT}/lib/libhi_mpi_audio.so
-    ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
-    ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
-    ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
-
-    # aac
-    ${HI3519_ROOT}/lib/libaac_comm.so
-    ${HI3519_ROOT}/lib/libaac_dec.so
-    ${HI3519_ROOT}/lib/libaac_enc.so
-    ${HI3519_ROOT}/lib/libaac_sbr_dec.so
-    ${HI3519_ROOT}/lib/libaac_sbr_enc.so
-
-    # opus
-    ${HI3519_ROOT}/lib/libopus.so
-
-    # math
-    m
-
-    # odas library
     odas
-)
-target_include_directories(
-    odas3519
-    PRIVATE
-
-    # Hi3519
-    ${HI3519_ROOT}/include
-    
-    # odas library
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    
-    # internal
-    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio
-)
-target_compile_definitions(
-    odas3519
-    PRIVATE
-
-    OT_ACODEC_TYPE_INNER
 )
 
 if (NOT ODAS_DISABLE_INSTALL)
@@ -314,7 +312,6 @@ if (NOT ODAS_DISABLE_INSTALL)
 
     if(ODAS_INSTALL_EXECUTABLES)
         install(TARGETS odaslive DESTINATION bin)
-        install(TARGETS odasserver DESTINATION bin)
     endif()
 endif()
 
