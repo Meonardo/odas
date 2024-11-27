@@ -1387,21 +1387,21 @@ static td_s32 comm_audio_start_ai_vqe(
   if (ai_vqe_param->ai_vqe_attr != NULL) {
     td_bool ai_vqe = TD_TRUE;
     switch (ai_vqe_param->ai_vqe_type) {
-      case SAMPLE_AUDIO_VQE_TYPE_NONE:
+      case AUDIO_VQE_TYPE_NONE:
         ret = TD_SUCCESS;
         ai_vqe = TD_FALSE;
         break;
-      case SAMPLE_AUDIO_VQE_TYPE_RECORD:
+      case AUDIO_VQE_TYPE_RECORD:
         ret = ss_mpi_ai_set_record_vqe_attr(
             ai_dev_id, ai_chn,
             (ot_ai_record_vqe_cfg *)ai_vqe_param->ai_vqe_attr);
         break;
-      case SAMPLE_AUDIO_VQE_TYPE_TALK:
+      case AUDIO_VQE_TYPE_TALK:
         ret = ss_mpi_ai_set_talk_vqe_attr(
             ai_dev_id, ai_chn, ao_dev_id, ai_chn,
             (ot_ai_talk_vqe_cfg *)ai_vqe_param->ai_vqe_attr);
         break;
-      case SAMPLE_AUDIO_VQE_TYPE_TALKV2:
+      case AUDIO_VQE_TYPE_TALKV2:
         ret = ss_mpi_ai_set_talk_vqe_v2_attr(
             ai_dev_id, ai_chn, ao_dev_id, ai_chn,
             (ot_ai_talk_vqe_v2_cfg *)ai_vqe_param->ai_vqe_attr);
