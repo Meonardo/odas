@@ -247,6 +247,56 @@ target_link_libraries(odasserver
     odas
 )
 
+# Hi3519 audio test
+add_executable(odas_3519
+    demo/3519/sample_audio.c
+    demo/3519/sample_comm.h
+    demo/3519/sample_comm_audio.c
+)
+target_link_libraries(
+    odas_3519
+    PRIVATE
+
+    ${HI3519_ROOT}/lib/libsecurec.so
+    ${HI3519_ROOT}/lib/libmp3_enc.so
+    ${HI3519_ROOT}/lib/libmp3_lame.so
+    ${HI3519_ROOT}/lib/libmp3_dec.so
+    ${HI3519_ROOT}/lib/libvoice_engine.so
+    ${HI3519_ROOT}/lib/libupvqe.so
+    ${HI3519_ROOT}/lib/libdnvqe.so
+
+    # mpi
+    ${HI3519_ROOT}/lib/libhi_mpi_audio.so
+    ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
+    ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
+    ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
+
+    # aac
+    ${HI3519_ROOT}/lib/libaac_comm.so
+    ${HI3519_ROOT}/lib/libaac_dec.so
+    ${HI3519_ROOT}/lib/libaac_enc.so
+    ${HI3519_ROOT}/lib/libaac_sbr_dec.so
+    ${HI3519_ROOT}/lib/libaac_sbr_enc.so
+
+    # opus
+    ${HI3519_ROOT}/lib/libopus.so
+
+    # math
+    m
+)
+target_include_directories(
+    odas_3519
+    PRIVATE
+
+    ${HI3519_ROOT}/include
+)
+target_compile_definitions(
+    odas_3519
+    PRIVATE
+
+    OT_ACODEC_TYPE_INNER
+)
+
 if (NOT ODAS_DISABLE_INSTALL)
     install(TARGETS odas LIBRARY DESTINATION lib)
     install(
