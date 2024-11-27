@@ -1,6 +1,9 @@
 project(ODAS)
 cmake_minimum_required(VERSION 2.4.6..3.16)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
@@ -240,21 +243,14 @@ target_include_directories(odaslive
     ${PULSEAUDIO}/include
 )
 
-add_executable(odasserver
-    demo/odasserver/main.c
-)
-target_link_libraries(odasserver
-    odas
-)
-
-# Hi3519 audio test
-add_executable(odas_3519
-    demo/3519/sample_audio.c
-    demo/3519/sample_comm.h
-    demo/3519/sample_comm_audio.c
+# Hi3519 audio app
+add_executable(odas3519
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio/comm_audio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio/comm_audio.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/main.cpp
 )
 target_link_libraries(
-    odas_3519
+    odas3519
     PRIVATE
 
     ${HI3519_ROOT}/lib/libsecurec.so
@@ -285,13 +281,14 @@ target_link_libraries(
     m
 )
 target_include_directories(
-    odas_3519
+    odas3519
     PRIVATE
 
     ${HI3519_ROOT}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/app/comm_audio
 )
 target_compile_definitions(
-    odas_3519
+    odas3519
     PRIVATE
 
     OT_ACODEC_TYPE_INNER
