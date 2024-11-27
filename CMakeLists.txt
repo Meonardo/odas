@@ -196,6 +196,7 @@ set(SRC
     src/sink/snk_spectra.c
     src/sink/snk_tracks.c
     src/source/src_hops.c
+    src/source/src_pcm.c
 )
 
 add_library(odas SHARED
