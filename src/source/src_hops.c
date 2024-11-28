@@ -590,6 +590,9 @@ int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
     td_u8 *data = item->frame.virt_addr[0];
     // copy this channel data to buffer
     int buffer_size = item->frame.len;
+    // if (i == 0) {
+    //   src_hops_save_to_file1(data, buffer_size);
+    // }
     offset = i * buffer_size;
     memcpy(obj->buffer + offset, data, buffer_size);
 
