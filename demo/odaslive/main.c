@@ -147,6 +147,7 @@ int main(int argc, char *argv[]) {
   // +------------------------------------------------------+
 
   if (type == processing_singlethread) {
+    printf("| + Processing (single thread)...... \n\n\n");
     // +--------------------------------------------------+
     // | Profiler                                         |
     // +--------------------------------------------------+
@@ -179,7 +180,7 @@ int main(int argc, char *argv[]) {
     // | Processing                                       |
     // +--------------------------------------------------+
 
-    if (verbose == 0x01) printf("| + Processing....................... ");
+    if (verbose == 0x01) printf("| + Processing....................... \n\n\n");
     fflush(stdout);
 
     threads_single_open(objs);

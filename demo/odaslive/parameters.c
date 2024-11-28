@@ -186,7 +186,7 @@ src_hops_cfg *parameters_src_hops_mics_config(const char *fileConfig) {
     tmpStr2 = parameters_lookup_string(fileConfig, "raw.interface.source");
 
     cfg->interface = interface_construct_customized_pcm(tmpStr2);
-    cfg->channel_map = parameters_pa_channel_map_config(fileConfig);
+    // cfg->channel_map = parameters_pa_channel_map_config(fileConfig);
 
     free((void *)tmpStr2);
 

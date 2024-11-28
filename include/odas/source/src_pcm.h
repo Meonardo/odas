@@ -22,6 +22,9 @@ typedef struct {
   ot_audio_bit_width bit_width;
 
   src_pcm_item items[SAMPLE_AUDIO_AI_CHANNELS];
+
+  td_bool init;
+  pthread_t thread;
 } src_pcm_spec;
 
 td_s32 src_pcm_init(src_pcm_spec* obj);

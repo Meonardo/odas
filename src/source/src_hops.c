@@ -28,6 +28,32 @@
 
 #include <source/src_hops.h>
 
+static FILE *test_input_file = NULL;
+
+static void src_hops_save_to_file(src_hops_obj *obj) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/input.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  fwrite(obj->buffer, obj->bufferSize, 1, test_input_file);
+}
+
+static void src_hops_save_to_file1(void *buffer, size_t len) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/input.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  fwrite(buffer, len, 1, test_input_file);
+}
+
 src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
                                  const msg_hops_cfg *msg_hops_config) {
   src_hops_obj *obj;
@@ -46,8 +72,7 @@ src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
   if (src_hops_config->channel_map != NULL) {
     // Will not be null if in pulseaudio mode
     memcpy(&obj->cm, src_hops_config->channel_map, sizeof(pa_channel_map));
-  } else if (obj->interface->type == interface_pulseaudio ||
-             obj->interface->type == interface_customized_pcm) {
+  } else if (obj->interface->type == interface_pulseaudio) {
     // Can't be null if we are in pulseaudio mode
     printf("Error: Pulseaudio interface requires channel map.\n");
     exit(EXIT_FAILURE);
@@ -301,6 +326,8 @@ void src_hops_open_interface_customized_pcm(src_hops_obj *obj) {
   obj->sps.chn = obj->nChannels;
   obj->sps.sample_rate = obj->fS;
   obj->sps.per_frame = obj->hopSize;
+  obj->sps.init = TD_FALSE;
+
   switch (obj->format->type) {
     case format_binary_int08:
       obj->sps.bit_width = OT_AUDIO_BIT_WIDTH_8;
@@ -522,22 +549,58 @@ int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
   return rtnValue;
 }
 
-int src_hops_process_interface_customized_pcm(src_hops_obj *obj) { 
+void *src_hops_process_interface_customized_pcm_thread(void *arg) {
+  src_hops_obj *obj = (src_hops_obj *)arg;
+
+  while (1) {
+    int offset = 0;
+
     for (int i = 0; i < obj->sps.chn; i++) {
-        src_pcm_item *item = &(obj->sps.items[i]);
-        if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
-          return -1;
-        }
+      src_pcm_item *item = &obj->sps.items[i];
+      if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
+        return NULL;
+      }
 
-        td_u8 *data = item->frame.virt_addr[0];
+      td_u8 *data = item->frame.virt_addr[0];
+      // copy this channel data to buffer
+      int buffer_size = item->frame.len;
+      offset = i * buffer_size;
+      memcpy(obj->buffer + offset, data, buffer_size);
 
-        // copy this channel data to buffer
-        /// TODO:
-
-        // release the frame
-        src_pcm_release_frame(&(obj->sps), item);
+      // release the frame
+      src_pcm_release_frame(&obj->sps, item);
     }
-    return 0; 
+
+    // write to file
+    src_hops_save_to_file(obj);
+  }
+
+  return NULL;
+}
+
+int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
+  int offset = 0;
+
+  for (int i = 0; i < obj->sps.chn; i++) {
+    src_pcm_item *item = &obj->sps.items[i];
+    if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
+      return -1;
+    }
+
+    td_u8 *data = item->frame.virt_addr[0];
+    // copy this channel data to buffer
+    int buffer_size = item->frame.len;
+    offset = i * buffer_size;
+    memcpy(obj->buffer + offset, data, buffer_size);
+
+    // release the frame
+    src_pcm_release_frame(&obj->sps, item);
+  }
+
+  // write to file
+  src_hops_save_to_file(obj);
+
+  return 0;
 }
 
 int src_hops_process_interface_socket(src_hops_obj *obj) {

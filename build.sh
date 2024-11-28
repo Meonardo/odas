@@ -9,6 +9,14 @@ cd ./build
 make -j4
 echo "build done"
 
-# copy file to shared
-cp bin/odas3519 ../../../shared/
+# copy files to shared
+echo "copy bin to shared"
+cp bin/odaslive ../../../shared/
+
+echo "copy so to shared"
+cp lib/libodas.so ../../../shared/
+
+echo "copy config to shared"
+cp ../config/odaslive/respeaker_8_mic_array.cfg ../../../shared/
+
 echo "copy done"

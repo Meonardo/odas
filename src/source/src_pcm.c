@@ -20,7 +20,7 @@ static td_void init_params(ot_aio_attr* ai_attr, ot_audio_dev* ai_dev,
   ai_attr->snd_mode = OT_AUDIO_SOUND_MODE_MONO;
   ai_attr->expand_flag = 0;
   ai_attr->frame_num = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
-  ai_attr->point_num_per_frame = SAMPLE_AUDIO_POINT_NUM_PER_FRAME;
+  ai_attr->point_num_per_frame = obj->per_frame;
   ai_attr->chn_cnt = obj->chn;
 
   *ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
@@ -41,7 +41,7 @@ static td_s32 app_audio_select(td_s32 ai_fd, fd_set* read_fds) {
   if (ret < 0) {
     return TD_FAILURE;
   } else if (ret == 0) {
-    printf("%s: get ai frame select time out\n", __FUNCTION__);
+    printf("[%s] get ai frame select time out\n", __FUNCTION__);
     return TD_FAILURE;
   }
   return TD_SUCCESS;
@@ -53,7 +53,7 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
   // init audio module
   ret = comm_audio_init();
   if (ret != TD_SUCCESS) {
-    printf("%s: audio init failed with %d!\n", __FUNCTION__, ret);
+    printf("[%s] audio init failed with %d!\n", __FUNCTION__, ret);
     return TD_FAILURE;
   }
 
@@ -63,17 +63,17 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
   init_params(&(obj->ai_attr), &(obj->ai_dev), obj);
 
   // start ai
-  ret = comm_audio_start_ai(obj->ai_dev, obj->chn, &(obj->ai_attr),
+  ret = comm_audio_start_ai(obj->ai_dev, obj->chn, &obj->ai_attr,
                             &ai_vqe_param, -1);
   if (ret != TD_SUCCESS) {
-    printf("%s: comm_audio_start_ai failed with %d!\n", __FUNCTION__, ret);
+    printf("[%s] comm_audio_start_ai failed with %d!\n", __FUNCTION__, ret);
     return ret;
   }
 
   // set dmic gain
   ret = ss_mpi_ai_set_dmic_gain(obj->ai_dev, DMIC_GAIN);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ai_set_dmic_gain failed with %d!\n", __FUNCTION__, ret);
+    printf("[%s] ss_mpi_ai_set_dmic_gain failed with %d!\n", __FUNCTION__, ret);
     comm_audio_stop_ai(obj->ai_dev, obj->chn, TD_FALSE, TD_TRUE);
     return ret;
   }
@@ -82,13 +82,6 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
   for (int i = 0; i < obj->chn; i++) {
     obj->items[i].chn = i;
     obj->items[i].ai_fd = -1;
-
-    if (obj->items[i].ai_fd < 0) {
-      printf("%s: ss_mpi_ai_get_fd failed with %d!\n", __FUNCTION__,
-             obj->items[i].ai_fd);
-      comm_audio_stop_ai(obj->ai_dev, obj->chn, TD_FALSE, TD_TRUE);
-      return obj->items[i].ai_fd;
-    }
 
     ot_ai_chn_param ai_chn_para;
     ret = ss_mpi_ai_get_chn_param(obj->ai_dev, i, &ai_chn_para);
@@ -110,7 +103,11 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
     }
 
     obj->items[i].ai_fd = ai_fd;
+
+    printf("[%s] ai(%d,%d) fd = %d\n", __FUNCTION__, obj->ai_dev, i, ai_fd);
   }
+
+  printf("[%s] src_pcm_spec init success!\n\n\n", __FUNCTION__);
 
   return TD_SUCCESS;
 }
@@ -121,12 +118,14 @@ void src_pcm_destory(src_pcm_spec* obj) {
 
   // destory module
   comm_audio_exit();
+
+  printf("[%s] src_pcm_spec destory success!\n\n\n", __FUNCTION__);
 }
 
 td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
   td_s32 ret;
 
-  ret = app_audio_select(item->ai_fd, &(item->read_fds));
+  ret = app_audio_select(item->ai_fd, &item->read_fds);
   if (ret != TD_SUCCESS) {
     printf("%s: app_audio_select failed with %d!\n", __FUNCTION__, ret);
     return TD_FAILURE;
@@ -134,25 +133,28 @@ td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
 
   if (FD_ISSET(item->ai_fd, &(item->read_fds))) {
     /* get frame from ai chn */
-    (td_void) memset_s(&(item->aec_frm), sizeof(ot_aec_frame), 0,
-                       sizeof(ot_aec_frame));
-
-    ret = ss_mpi_ai_get_frame(obj->ai_dev, item->chn, &(item->frame),
-                              &(item->aec_frm), TD_FALSE);
+    ret =
+        ss_mpi_ai_get_frame(obj->ai_dev, item->chn, &item->frame, NULL, TD_FALSE);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ai_get_frame failed with %d!\n", __FUNCTION__, ret);
+      printf("[%s] ss_mpi_ai_get_frame failed with %d!\n", __FUNCTION__, ret);
       return TD_FAILURE;
     }
+
+    // printf("[%s] ai(%d,%d) get frame, len = %d\n", __FUNCTION__, obj->ai_dev, item->chn,
+    //        item->frame.len);
   }
 
   return TD_SUCCESS;
 }
 
 void src_pcm_release_frame(src_pcm_spec* obj, src_pcm_item* item) {
-  td_s32 ret = ss_mpi_ai_release_frame(obj->ai_dev, item->chn, &(item->frame),
-                                       &(item->aec_frm));
+  td_s32 ret =
+      ss_mpi_ai_release_frame(obj->ai_dev, item->chn, &item->frame, NULL);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
+    printf("[%s] ss_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
            __FUNCTION__, obj->ai_dev, item->chn, ret);
+    return;
   }
+
+  // printf("[%s] ai(%d,%d) release frame\n", __FUNCTION__, obj->ai_dev, item->chn);
 }
