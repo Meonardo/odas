@@ -39,7 +39,7 @@ static void src_hops_save_to_file(src_hops_obj *obj) {
     }
   }
 
-  fwrite(obj->buffer, obj->bufferSize, 1, test_input_file);
+  fwrite(obj->buffer, 1, obj->bufferSize, test_input_file);
 }
 
 static void src_hops_save_to_file1(void *buffer, size_t len) {
@@ -51,7 +51,7 @@ static void src_hops_save_to_file1(void *buffer, size_t len) {
     }
   }
 
-  fwrite(buffer, len, 1, test_input_file);
+  fwrite(buffer, 1, len, test_input_file);
 }
 
 src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
@@ -580,6 +580,8 @@ void *src_hops_process_interface_customized_pcm_thread(void *arg) {
 
 int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
   int offset = 0;
+  int size_per_sample = obj->format->type / 8;
+  int frame_len = obj->hopSize; 
 
   for (int i = 0; i < obj->sps.chn; i++) {
     src_pcm_item *item = &obj->sps.items[i];
@@ -588,13 +590,22 @@ int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
     }
 
     td_u8 *data = item->frame.virt_addr[0];
-    // copy this channel data to buffer
-    int buffer_size = item->frame.len;
+
     // if (i == 0) {
     //   src_hops_save_to_file1(data, buffer_size);
     // }
-    offset = i * buffer_size;
-    memcpy(obj->buffer + offset, data, buffer_size);
+
+    // Interleave channel data into the buffer
+    for (int iSample = 0; iSample < frame_len; iSample++) {
+      // Calculate the offset within the channel buffer
+      int channel_sample_offset =
+          iSample * size_per_sample;  // 2 bytes per sample (16-bit)
+      // Copy the current sample from the i-th channel into the interleaved
+      // buffer
+      memcpy(obj->buffer + offset, data + channel_sample_offset,
+             size_per_sample);
+      offset += size_per_sample;  // Move to next position in the buffer
+    }
 
     // release the frame
     src_pcm_release_frame(&obj->sps, item);
