@@ -549,65 +549,39 @@ int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
   return rtnValue;
 }
 
-void *src_hops_process_interface_customized_pcm_thread(void *arg) {
-  src_hops_obj *obj = (src_hops_obj *)arg;
-
-  while (1) {
-    int offset = 0;
-
-    for (int i = 0; i < obj->sps.chn; i++) {
-      src_pcm_item *item = &obj->sps.items[i];
-      if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
-        return NULL;
-      }
-
-      td_u8 *data = item->frame.virt_addr[0];
-      // copy this channel data to buffer
-      int buffer_size = item->frame.len;
-      offset = i * buffer_size;
-      memcpy(obj->buffer + offset, data, buffer_size);
-
-      // release the frame
-      src_pcm_release_frame(&obj->sps, item);
-    }
-
-    // write to file
-    src_hops_save_to_file(obj);
-  }
-
-  return NULL;
-}
-
 int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
   int offset = 0;
   int size_per_sample = obj->format->type / 8;
-  int frame_len = obj->hopSize; 
+  int frame_len = obj->hopSize;
 
+  // read frame for each channel
   for (int i = 0; i < obj->sps.chn; i++) {
     src_pcm_item *item = &obj->sps.items[i];
-    if (src_pcm_read_frame(&(obj->sps), item) != TD_SUCCESS) {
-      return -1;
+    if (src_pcm_read_frame(&obj->sps, item) != TD_SUCCESS) {
+      printf("Cannot read frame for channel %d\n", i);
+      return -1;  // WARN: memory leak, not release the read frames
     }
+  }
 
-    td_u8 *data = item->frame.virt_addr[0];
-
-    // if (i == 0) {
-    //   src_hops_save_to_file1(data, buffer_size);
-    // }
-
-    // Interleave channel data into the buffer
-    for (int iSample = 0; iSample < frame_len; iSample++) {
-      // Calculate the offset within the channel buffer
-      int channel_sample_offset =
-          iSample * size_per_sample;  // 2 bytes per sample (16-bit)
-      // Copy the current sample from the i-th channel into the interleaved
-      // buffer
-      memcpy(obj->buffer + offset, data + channel_sample_offset,
-             size_per_sample);
-      offset += size_per_sample;  // Move to next position in the buffer
+  // copy each channel data to buffer
+  // the memory layout of the `buffer` will be interleaved
+  // for example of 8 channels and 480 samples
+  // [ch1 sample1] [ch2 sample1] ... [ch8 sample1]
+  // [ch1 sample2] [ch2 sample2] ... [ch8 sample2]
+  // ...
+  // [ch1 sample480] [ch2 sample480] ... [ch8 sample480]
+  for (int i = 0; i < frame_len; i++) {
+    for (int j = 0; j < obj->sps.chn; j++) {
+      src_pcm_item *item = &obj->sps.items[j];
+      td_u8 *data = item->frame.virt_addr[0];
+      offset = i * obj->sps.chn * size_per_sample + j * size_per_sample;
+      memcpy(obj->buffer + offset, data + i * size_per_sample, size_per_sample);
     }
+  }
 
-    // release the frame
+  // release frames
+  for (int i = 0; i < obj->sps.chn; i++) {
+    src_pcm_item *item = &obj->sps.items[i];
     src_pcm_release_frame(&obj->sps, item);
   }
 
