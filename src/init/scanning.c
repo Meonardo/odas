@@ -65,6 +65,7 @@
                                              interpRate);            
 
             // Generate gains in space
+            printf("[%s:%d] directivity_spatialgains, points: %d\n", __FILE__, __LINE__, obj->points[iLevel]->nPoints);
             spatialgains = directivity_spatialgains(mics, 
                                                     beampatterns_mics,
                                                     spatialfilters, 

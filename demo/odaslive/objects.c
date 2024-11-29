@@ -828,12 +828,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->asrc_hops_mics_object = asrc_hops_construct(
       cfgs->src_hops_mics_config, cfgs->msg_hops_mics_raw_config);
 
+  printf("[%s:%d] asrc_hops_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_hops_mics_raw_object =
       acon_hops_construct(1, objs->nMessages, cfgs->msg_hops_mics_raw_config);
+
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Mapping                                              |
@@ -846,12 +850,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->amod_mapping_mics_object = amod_mapping_construct(
       cfgs->mod_mapping_mics_config, cfgs->msg_hops_mics_map_config);
 
+  printf("[%s:%d] amod_mapping_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_hops_mics_map_object =
       acon_hops_construct(1, objs->nMessages, cfgs->msg_hops_mics_map_config);
+
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Resample                                             |
@@ -865,12 +873,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_resample_mics_config, cfgs->msg_hops_mics_map_config,
       cfgs->msg_hops_mics_rs_config);
 
+  printf("[%s:%d] amod_resample_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_hops_mics_rs_object =
       acon_hops_construct(2, objs->nMessages, cfgs->msg_hops_mics_rs_config);
+
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | STFT                                                 |
@@ -884,12 +896,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_stft_mics_config, cfgs->msg_hops_mics_rs_config,
       cfgs->msg_spectra_mics_config);
 
+  printf("[%s:%d] amod_stft_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_spectra_mics_object =
       acon_spectra_construct(3, objs->nMessages, cfgs->msg_spectra_mics_config);
+
+  printf("[%s:%d] acon_spectra_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Noise                                                |
@@ -903,12 +919,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_noise_mics_config, cfgs->msg_spectra_mics_config,
       cfgs->msg_powers_mics_config);
 
+  printf("[%s:%d] amod_noise_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_powers_mics_object =
       acon_powers_construct(1, objs->nMessages, cfgs->msg_powers_mics_config);
+
+  printf("[%s:%d] acon_powers_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | SSL                                                  |
@@ -922,6 +942,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       amod_ssl_construct(cfgs->mod_ssl_config, cfgs->msg_spectra_mics_config,
                          cfgs->msg_pots_ssl_config);
 
+  printf("[%s:%d] amod_ssl_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sinks                                            |
   // +--------------------------------------------------+
@@ -929,12 +951,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->asnk_pots_ssl_object =
       asnk_pots_construct(cfgs->snk_pots_ssl_config, cfgs->msg_pots_ssl_config);
 
+  printf("[%s:%d] asnk_pots_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_pots_ssl_object =
       acon_pots_construct(2, objs->nMessages, cfgs->msg_pots_ssl_config);
+
+  printf("[%s:%d] acon_pots_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Target                                               |
@@ -948,12 +974,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->inj_targets_sst_config, cfgs->msg_hops_mics_rs_config,
       cfgs->msg_targets_sst_config);
 
+  printf("[%s:%d] ainj_targets_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_targets_sst_object =
       acon_targets_construct(1, objs->nMessages, cfgs->msg_targets_sst_config);
+
+  printf("[%s:%d] acon_targets_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | SST                                                  |
@@ -967,6 +997,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_sst_config, cfgs->mod_ssl_config, cfgs->msg_pots_ssl_config,
       cfgs->msg_targets_sst_config, cfgs->msg_tracks_sst_config);
 
+  printf("[%s:%d] amod_sst_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sinks                                            |
   // +--------------------------------------------------+
@@ -974,12 +1006,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->asnk_tracks_sst_object = asnk_tracks_construct(
       cfgs->snk_tracks_sst_config, cfgs->msg_tracks_sst_config);
 
+  printf("[%s:%d] asnk_tracks_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
 
   objs->acon_tracks_sst_object =
       acon_tracks_construct(3, objs->nMessages, cfgs->msg_tracks_sst_config);
+
+  printf("[%s:%d] acon_tracks_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | SSS                                                  |
@@ -993,6 +1029,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       amod_sss_construct(cfgs->mod_sss_config, cfgs->msg_tracks_sst_config,
                          cfgs->msg_spectra_mics_config);
 
+  printf("[%s:%d] amod_sss_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
@@ -1001,6 +1039,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       acon_spectra_construct(1, objs->nMessages, cfgs->msg_spectra_seps_config);
   objs->acon_spectra_pfs_object =
       acon_spectra_construct(1, objs->nMessages, cfgs->msg_spectra_pfs_config);
+
+  printf("[%s:%d] acon_spectra_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | ISTFT                                                |
@@ -1018,6 +1058,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_istft_pfs_config, cfgs->msg_spectra_pfs_config,
       cfgs->msg_hops_pfs_config);
 
+  printf("[%s:%d] amod_istft_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
@@ -1026,6 +1068,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       acon_hops_construct(2, objs->nMessages, cfgs->msg_hops_seps_config);
   objs->acon_hops_pfs_object =
       acon_hops_construct(1, objs->nMessages, cfgs->msg_hops_pfs_config);
+
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Resample                                             |
@@ -1043,6 +1087,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_resample_pfs_config, cfgs->msg_hops_pfs_config,
       cfgs->msg_hops_pfs_rs_config);
 
+  printf("[%s:%d] amod_resample_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
@@ -1052,6 +1098,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
 
   objs->acon_hops_pfs_rs_object =
       acon_hops_construct(1, objs->nMessages, cfgs->msg_hops_pfs_rs_config);
+
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Volume                                               |
@@ -1067,6 +1115,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->amod_volume_pfs_object = amod_volume_construct(
       cfgs->mod_volume_pfs_config, cfgs->msg_hops_pfs_vol_config);
 
+  printf("[%s:%d] amod_volume_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
@@ -1077,6 +1127,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->acon_hops_pfs_vol_object =
       acon_hops_construct(1, objs->nMessages, cfgs->msg_hops_pfs_vol_config);
 
+  printf("[%s:%d] acon_hops_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sink                                             |
   // +--------------------------------------------------+
@@ -1086,6 +1138,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
 
   objs->asnk_hops_pfs_vol_object = asnk_hops_construct(
       cfgs->snk_hops_pfs_vol_config, cfgs->msg_hops_pfs_vol_config);
+
+  printf("[%s:%d] asnk_hops_construct done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Classify                                             |
@@ -1099,6 +1153,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       cfgs->mod_classify_config, cfgs->msg_hops_seps_config,
       cfgs->msg_tracks_sst_config, cfgs->msg_categories_config);
 
+  printf("[%s:%d] amod_classify_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Connector                                        |
   // +--------------------------------------------------+
@@ -1106,12 +1162,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
   objs->acon_categories_object = acon_categories_construct(
       1, objs->nMessages, cfgs->msg_categories_config);
 
+  printf("[%s:%d] acon_categories_construct done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sink                                             |
   // +--------------------------------------------------+
 
   objs->asnk_categories_object = asnk_categories_construct(
       cfgs->snk_categories_config, cfgs->msg_categories_config);
+
+  printf("[%s:%d] asnk_categories_construct done\n", __FUNCTION__, __LINE__);
 
   // +----------------------------------------------------------+
   // | Connect                                                  |
@@ -1128,6 +1188,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   asrc_hops_connect(objs->asrc_hops_mics_object,
                     objs->acon_hops_mics_raw_object->in);
 
+  printf("[%s:%d] asrc_hops_connect done\n", __FUNCTION__, __LINE__);
+
   // +------------------------------------------------------+
   // | Mapping                                              |
   // +------------------------------------------------------+
@@ -1139,6 +1201,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   amod_mapping_connect(objs->amod_mapping_mics_object,
                        objs->acon_hops_mics_raw_object->outs[0],
                        objs->acon_hops_mics_map_object->in);
+
+  printf("[%s:%d] amod_mapping_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Resample                                             |
@@ -1152,6 +1216,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
                         objs->acon_hops_mics_map_object->outs[0],
                         objs->acon_hops_mics_rs_object->in);
 
+  printf("[%s:%d] amod_resample_connect done\n", __FUNCTION__, __LINE__);
+
   // +------------------------------------------------------+
   // | STFT                                                 |
   // +------------------------------------------------------+
@@ -1163,6 +1229,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   amod_stft_connect(objs->amod_stft_mics_object,
                     objs->acon_hops_mics_rs_object->outs[0],
                     objs->acon_spectra_mics_object->in);
+
+  printf("[%s:%d] amod_stft_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Noise                                                |
@@ -1176,6 +1244,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
                      objs->acon_spectra_mics_object->outs[0],
                      objs->acon_powers_mics_object->in);
 
+  printf("[%s:%d] amod_noise_connect done\n", __FUNCTION__, __LINE__);
+
   // +------------------------------------------------------+
   // | SSL                                                  |
   // +------------------------------------------------------+
@@ -1188,12 +1258,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
                    objs->acon_spectra_mics_object->outs[1],
                    objs->acon_pots_ssl_object->in);
 
+  printf("[%s:%d] amod_ssl_connect done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sinks                                            |
   // +--------------------------------------------------+
 
   asnk_pots_connect(objs->asnk_pots_ssl_object,
                     objs->acon_pots_ssl_object->outs[1]);
+
+  printf("[%s:%d] asnk_pots_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Target                                               |
@@ -1207,6 +1281,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
                        objs->acon_hops_mics_rs_object->outs[1],
                        objs->acon_targets_sst_object->in);
 
+  printf("[%s:%d] ainj_targets_connect done\n", __FUNCTION__, __LINE__);
+
   // +------------------------------------------------------+
   // | SST                                                  |
   // +------------------------------------------------------+
@@ -1219,12 +1295,16 @@ aobjects *aobjects_construct(const configs *cfgs) {
                    objs->acon_targets_sst_object->outs[0],
                    objs->acon_tracks_sst_object->in);
 
+  printf("[%s:%d] amod_sst_connect done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sinks                                            |
   // +--------------------------------------------------+
 
   asnk_tracks_connect(objs->asnk_tracks_sst_object,
                       objs->acon_tracks_sst_object->outs[2]);
+
+  printf("[%s:%d] asnk_tracks_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | SSS                                                  |
@@ -1239,6 +1319,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       objs->acon_powers_mics_object->outs[0],
       objs->acon_tracks_sst_object->outs[0], objs->acon_spectra_seps_object->in,
       objs->acon_spectra_pfs_object->in);
+
+  printf("[%s:%d] amod_sss_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | ISTFT                                                |
@@ -1256,6 +1338,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
                      objs->acon_spectra_pfs_object->outs[0],
                      objs->acon_hops_pfs_object->in);
 
+  printf("[%s:%d] amod_istft_connect done\n", __FUNCTION__, __LINE__);
+
   // +------------------------------------------------------+
   // | Resample                                             |
   // +------------------------------------------------------+
@@ -1271,6 +1355,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
   amod_resample_connect(objs->amod_resample_pfs_object,
                         objs->acon_hops_pfs_object->outs[0],
                         objs->acon_hops_pfs_rs_object->in);
+
+  printf("[%s:%d] amod_resample_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Volume                                               |
@@ -1288,6 +1374,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
                       objs->acon_hops_pfs_rs_object->outs[0],
                       objs->acon_hops_pfs_vol_object->in);
 
+  printf("[%s:%d] amod_volume_connect done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sink                                             |
   // +--------------------------------------------------+
@@ -1297,6 +1385,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
 
   asnk_hops_connect(objs->asnk_hops_pfs_vol_object,
                     objs->acon_hops_pfs_vol_object->outs[0]);
+
+  printf("[%s:%d] asnk_hops_connect done\n", __FUNCTION__, __LINE__);
 
   // +------------------------------------------------------+
   // | Classify                                             |
@@ -1310,6 +1400,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
       objs->amod_classify_object, objs->acon_hops_seps_object->outs[1],
       objs->acon_tracks_sst_object->outs[1], objs->acon_categories_object->in);
 
+  printf("[%s:%d] amod_classify_connect done\n", __FUNCTION__, __LINE__);
+
   // +--------------------------------------------------+
   // | Sink                                             |
   // +--------------------------------------------------+
@@ -1317,9 +1409,13 @@ aobjects *aobjects_construct(const configs *cfgs) {
   asnk_categories_connect(objs->asnk_categories_object,
                           objs->acon_categories_object->outs[0]);
 
+  printf("[%s:%d] asnk_categories_connect done\n", __FUNCTION__, __LINE__);
+
   // +----------------------------------------------------------+
   // | Enable modules                                           |
   // +----------------------------------------------------------+
+
+  printf("[%s:%d] amod_mapping_enable\n", __FUNCTION__, __LINE__);
 
   amod_mapping_enable(objs->amod_mapping_mics_object);
   amod_resample_enable(objs->amod_resample_mics_object);
@@ -1362,6 +1458,8 @@ aobjects *aobjects_construct(const configs *cfgs) {
     amod_istft_enable(objs->amod_istft_seps_object);
     amod_classify_enable(objs->amod_classify_object);
   }
+
+  printf("[%s:%d] amod_mapping_enable done\n", __FUNCTION__, __LINE__);
 
   return objs;
 }
