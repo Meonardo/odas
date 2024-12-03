@@ -1,6 +1,25 @@
 
 #include "objects.h"
 
+static FILE *test_input_file = NULL;
+
+static void save_test_float_file(msg_hops_obj *obj) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/test_float.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file test_float.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // float
+  for (int s = 0; s < obj->hops->hopSize; s++) {
+    for (int i = 0; i < obj->hops->nSignals; i++) {
+      fwrite(&obj->hops->array[i][s], sizeof(float), 1, test_input_file);
+    }
+  }
+}
+
 objects *objects_construct(const configs *cfgs) {
   objects *objs;
   unsigned int iSink;
@@ -1419,6 +1438,7 @@ aobjects *aobjects_construct(const configs *cfgs) {
 
   amod_mapping_enable(objs->amod_mapping_mics_object);
   amod_resample_enable(objs->amod_resample_mics_object);
+  // Short-Time Fourier Transform (STFT)
   amod_stft_enable(objs->amod_stft_mics_object);
 
   if (cfgs->snk_pots_ssl_config->interface->type != interface_blackhole) {

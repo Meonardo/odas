@@ -29,6 +29,25 @@
 
 #include <asource/asrc_hops.h>
 
+static FILE *test_input_file = NULL;
+
+static void src_hops_save_to_file(msg_hops_obj *obj) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/input_float.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // float
+  for (int s = 0 ; s < obj->hops->hopSize; s++) {
+    for (int i = 0; i < obj->hops->nSignals; i++) {
+      fwrite(&obj->hops->array[i][s], sizeof(float), 1, test_input_file);
+    }
+  }
+}
+
 asrc_hops_obj *asrc_hops_construct(const src_hops_cfg *src_hops_config,
                                    const msg_hops_cfg *msg_hops_config) {
   asrc_hops_obj *obj;
@@ -73,6 +92,10 @@ void *asrc_hops_thread(void *ptr) {
     msg_hops_out = amsg_hops_empty_pop(obj->out);
     src_hops_connect(obj->src_hops, msg_hops_out);
     rtnValue = src_hops_process(obj->src_hops);
+
+    // write the buffer to a file
+    // src_hops_save_to_file(msg_hops_out);
+
     src_hops_disconnect(obj->src_hops);
     amsg_hops_filled_push(obj->out, msg_hops_out);
 
