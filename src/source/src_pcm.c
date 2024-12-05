@@ -60,7 +60,7 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
   comm_ai_vqe_param ai_vqe_param = {};
 
   // init audio input params
-  init_params(&(obj->ai_attr), &(obj->ai_dev), obj);
+  init_params(&(obj->ai_attr), &obj->ai_dev, obj);
 
   // start ai
   ret = comm_audio_start_ai(obj->ai_dev, obj->chn, &obj->ai_attr,
@@ -71,9 +71,9 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
   }
 
   // set dmic gain
-  ret = ss_mpi_ai_set_dmic_gain(obj->ai_dev, DMIC_GAIN);
+  ret = hi_mpi_ai_set_dmic_gain(obj->ai_dev, DMIC_GAIN);
   if (ret != TD_SUCCESS) {
-    printf("[%s] ss_mpi_ai_set_dmic_gain failed with %d!\n", __FUNCTION__, ret);
+    printf("[%s] hi_mpi_ai_set_dmic_gain failed with %d!\n", __FUNCTION__, ret);
     comm_audio_stop_ai(obj->ai_dev, obj->chn, TD_FALSE, TD_TRUE);
     return ret;
   }
@@ -84,19 +84,19 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
     obj->items[i].ai_fd = -1;
 
     ot_ai_chn_param ai_chn_para;
-    ret = ss_mpi_ai_get_chn_param(obj->ai_dev, i, &ai_chn_para);
+    ret = hi_mpi_ai_get_chn_param(obj->ai_dev, i, &ai_chn_para);
     if (ret != TD_SUCCESS) {
       printf("%s: get ai chn param failed\n", __FUNCTION__);
       return TD_FAILURE;
     }
     ai_chn_para.usr_frame_depth = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
-    ret = ss_mpi_ai_set_chn_param(obj->ai_dev, i, &ai_chn_para);
+    ret = hi_mpi_ai_set_chn_param(obj->ai_dev, i, &ai_chn_para);
     if (ret != TD_SUCCESS) {
       printf("%s: set ai chn param failed, ret=0x%x\n", __FUNCTION__, ret);
       return TD_FAILURE;
     }
 
-    td_s32 ai_fd = ss_mpi_ai_get_fd(obj->ai_dev, i);
+    td_s32 ai_fd = hi_mpi_ai_get_fd(obj->ai_dev, i);
     if (ai_fd < 0) {
       printf("%s: get ai fd failed\n", __FUNCTION__);
       return TD_FAILURE;
@@ -106,6 +106,9 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
 
     printf("[%s] ai(%d,%d) fd = %d\n", __FUNCTION__, obj->ai_dev, i, ai_fd);
   }
+
+  // mark as init
+  obj->init = TD_TRUE;
 
   printf("[%s] src_pcm_spec init success!\n\n\n", __FUNCTION__);
 
@@ -134,9 +137,9 @@ td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
   if (FD_ISSET(item->ai_fd, &(item->read_fds))) {
     /* get frame from ai chn */
     ret =
-        ss_mpi_ai_get_frame(obj->ai_dev, item->chn, &item->frame, NULL, TD_FALSE);
+        hi_mpi_ai_get_frame(obj->ai_dev, item->chn, &item->frame, NULL, TD_FALSE);
     if (ret != TD_SUCCESS) {
-      printf("[%s] ss_mpi_ai_get_frame failed with %d!\n", __FUNCTION__, ret);
+      printf("[%s] hi_mpi_ai_get_frame failed with %d!\n", __FUNCTION__, ret);
       return TD_FAILURE;
     }
 
@@ -149,9 +152,9 @@ td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
 
 void src_pcm_release_frame(src_pcm_spec* obj, src_pcm_item* item) {
   td_s32 ret =
-      ss_mpi_ai_release_frame(obj->ai_dev, item->chn, &item->frame, NULL);
+      hi_mpi_ai_release_frame(obj->ai_dev, item->chn, &item->frame, NULL);
   if (ret != TD_SUCCESS) {
-    printf("[%s] ss_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
+    printf("[%s] hi_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
            __FUNCTION__, obj->ai_dev, item->chn, ret);
     return;
   }

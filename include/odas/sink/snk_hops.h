@@ -37,6 +37,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <alsa/asoundlib.h>
+
 #include "../general/format.h"
 #include "../general/interface.h"
 #include "../message/msg_hops.h"
@@ -59,6 +61,13 @@ typedef struct snk_hops_obj {
 
   struct sockaddr_in sserver;
   int sid;
+
+  // uac stuff
+  snd_pcm_t *uac_hdl;
+  snd_pcm_hw_params_t *uac_hw_params;
+  snd_pcm_sw_params_t *uac_sw_params;
+  snd_pcm_uframes_t uac_period_size;
+  unsigned int uac_channels;
 
   char bytes[4];
 
@@ -90,6 +99,8 @@ void snk_hops_open_interface_file(snk_hops_obj* obj);
 
 void snk_hops_open_interface_socket(snk_hops_obj* obj);
 
+void snk_hops_open_interface_uac_out(snk_hops_obj* obj);
+
 void snk_hops_close(snk_hops_obj* obj);
 
 void snk_hops_close_interface_blackhole(snk_hops_obj* obj);
@@ -98,6 +109,8 @@ void snk_hops_close_interface_file(snk_hops_obj* obj);
 
 void snk_hops_close_interface_socket(snk_hops_obj* obj);
 
+void snk_hops_close_interface_uac_out(snk_hops_obj* obj);
+
 int snk_hops_process(snk_hops_obj* obj);
 
 void snk_hops_process_interface_blackhole(snk_hops_obj* obj);
@@ -105,6 +118,8 @@ void snk_hops_process_interface_blackhole(snk_hops_obj* obj);
 void snk_hops_process_interface_file(snk_hops_obj* obj);
 
 void snk_hops_process_interface_socket(snk_hops_obj* obj);
+
+void snk_hops_process_interface_uac_out(snk_hops_obj* obj);
 
 void snk_hops_process_format_binary_int08(snk_hops_obj* obj);
 

@@ -42,7 +42,8 @@ typedef enum interface_type {
   interface_soundcard = 4,
   interface_terminal = 5,
   interface_pulseaudio = 6,
-  interface_customized_pcm = 7
+  interface_uac_in = 7,
+  interface_uac_out = 8
 
 } interface_type;
 
@@ -69,12 +70,14 @@ interface_obj* interface_construct_socket(const char* ip,
 
 interface_obj* interface_construct_pulseaudio(const char* sourceName);
 
-interface_obj* interface_construct_customized_pcm(const char* sourceName);
+interface_obj* interface_construct_uac_in(const char* sourceName);
 
 interface_obj* interface_construct_soundcard(const unsigned int card,
                                              const unsigned int device);
 
 interface_obj* interface_construct_soundcard_by_name(char* deviceName);
+
+interface_obj* interface_construct_uac_out(const char* device_name);
 
 interface_obj* interface_construct_terminal(void);
 

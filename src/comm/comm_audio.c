@@ -14,7 +14,7 @@
 #include "ot_audio_mp3_adp.h"
 #include "ot_audio_opus_adp.h"
 #include "comm/comm_audio.h"
-#include "ss_audio_aac_adp.h"
+#include "hi_audio_aac_adp.h"
 #ifdef OT_ACODEC_TYPE_INNER
 #include "ot_acodec.h"
 #endif
@@ -783,7 +783,7 @@ static td_s32 audio_ai_get_frame_and_send(sample_ai *ai_ctl) {
   ot_aec_frame aec_frm = {0};
 
   /* get frame from ai chn */
-  ret = ss_mpi_ai_get_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm,
+  ret = hi_mpi_ai_get_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm,
                             TD_FALSE);
   if (ret != TD_SUCCESS) {
     /* continue */
@@ -792,32 +792,32 @@ static td_s32 audio_ai_get_frame_and_send(sample_ai *ai_ctl) {
 
   /* send frame to encoder */
   if (ai_ctl->send_aenc == TD_TRUE) {
-    ret = ss_mpi_aenc_send_frame(ai_ctl->aenc_chn, &frame, &aec_frm);
+    ret = hi_mpi_aenc_send_frame(ai_ctl->aenc_chn, &frame, &aec_frm);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_aenc_send_frame(%d), failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_aenc_send_frame(%d), failed with %#x!\n", __FUNCTION__,
              ai_ctl->aenc_chn, ret);
-      ss_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
+      hi_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
       return TD_FAILURE;
     }
   }
 
   /* send frame to ao */
   if (ai_ctl->send_ao == TD_TRUE) {
-    ret = ss_mpi_ao_send_frame(ai_ctl->ao_dev, ai_ctl->ao_chn, &frame,
+    ret = hi_mpi_ao_send_frame(ai_ctl->ao_dev, ai_ctl->ao_chn, &frame,
                                1000); /* 1000:1000ms */
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ao_send_frame(%d, %d), failed with %#x!\n",
+      printf("%s: hi_mpi_ao_send_frame(%d, %d), failed with %#x!\n",
              __FUNCTION__, ai_ctl->ao_dev, ai_ctl->ao_chn, ret);
-      ss_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
+      hi_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
       return TD_FAILURE;
     }
   }
 
   /* finally you must release the stream */
   ret =
-      ss_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
+      hi_mpi_ai_release_frame(ai_ctl->ai_dev, ai_ctl->ai_chn, &frame, &aec_frm);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
+    printf("%s: hi_mpi_ai_release_frame(%d, %d), failed with %#x!\n",
            __FUNCTION__, ai_ctl->ai_dev, ai_ctl->ai_chn, ret);
     return TD_FAILURE;
   }
@@ -834,7 +834,7 @@ void *comm_audio_ai_proc(void *parg) {
   struct timeval timeout_val;
   ot_ai_chn_param ai_chn_para;
 
-  ret = ss_mpi_ai_get_chn_param(ai_ctl->ai_dev, ai_ctl->ai_chn, &ai_chn_para);
+  ret = hi_mpi_ai_get_chn_param(ai_ctl->ai_dev, ai_ctl->ai_chn, &ai_chn_para);
   if (ret != TD_SUCCESS) {
     printf("%s: get ai chn param failed\n", __FUNCTION__);
     return NULL;
@@ -842,14 +842,14 @@ void *comm_audio_ai_proc(void *parg) {
 
   ai_chn_para.usr_frame_depth = SAMPLE_AUDIO_AI_USER_FRAME_DEPTH;
 
-  ret = ss_mpi_ai_set_chn_param(ai_ctl->ai_dev, ai_ctl->ai_chn, &ai_chn_para);
+  ret = hi_mpi_ai_set_chn_param(ai_ctl->ai_dev, ai_ctl->ai_chn, &ai_chn_para);
   if (ret != TD_SUCCESS) {
     printf("%s: set ai chn param failed\n", __FUNCTION__);
     return NULL;
   }
 
   FD_ZERO(&read_fds);
-  ai_fd = ss_mpi_ai_get_fd(ai_ctl->ai_dev, ai_ctl->ai_chn);
+  ai_fd = hi_mpi_ai_get_fd(ai_ctl->ai_dev, ai_ctl->ai_chn);
   if (ai_fd < 0) {
     printf("%s: get ai fd failed\n", __FUNCTION__);
     return NULL;
@@ -889,20 +889,20 @@ static td_s32 audio_aenc_get_stream_and_send(sample_aenc *aenc_ctl) {
   ot_audio_stream stream = {0};
 
   /* get stream from aenc chn */
-  ret = ss_mpi_aenc_get_stream(aenc_ctl->ae_chn, &stream, TD_FALSE);
+  ret = hi_mpi_aenc_get_stream(aenc_ctl->ae_chn, &stream, TD_FALSE);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_aenc_get_stream(%d), failed with %#x!\n", __FUNCTION__,
+    printf("%s: hi_mpi_aenc_get_stream(%d), failed with %#x!\n", __FUNCTION__,
            aenc_ctl->ae_chn, ret);
     return TD_FAILURE;
   }
 
   /* send stream to decoder and play for testing */
   if (aenc_ctl->send_ad_chn == TD_TRUE) {
-    ret = ss_mpi_adec_send_stream(aenc_ctl->ad_chn, &stream, TD_TRUE);
+    ret = hi_mpi_adec_send_stream(aenc_ctl->ad_chn, &stream, TD_TRUE);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_adec_send_stream(%d), failed with %#x!\n",
+      printf("%s: hi_mpi_adec_send_stream(%d), failed with %#x!\n",
              __FUNCTION__, aenc_ctl->ad_chn, ret);
-      ss_mpi_aenc_release_stream(aenc_ctl->ae_chn, &stream);
+      hi_mpi_aenc_release_stream(aenc_ctl->ae_chn, &stream);
       return TD_FAILURE;
     }
   }
@@ -912,9 +912,9 @@ static td_s32 audio_aenc_get_stream_and_send(sample_aenc *aenc_ctl) {
   (td_void) fflush(aenc_ctl->fd);
 
   /* finally you must release the stream */
-  ret = ss_mpi_aenc_release_stream(aenc_ctl->ae_chn, &stream);
+  ret = hi_mpi_aenc_release_stream(aenc_ctl->ae_chn, &stream);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_aenc_release_stream(%d), failed with %#x!\n",
+    printf("%s: hi_mpi_aenc_release_stream(%d), failed with %#x!\n",
            __FUNCTION__, aenc_ctl->ae_chn, ret);
     return TD_FAILURE;
   }
@@ -931,7 +931,7 @@ void *comm_audio_aenc_proc(void *parg) {
   struct timeval timeout_val;
 
   FD_ZERO(&read_fds);
-  aenc_fd = ss_mpi_aenc_get_fd(aenc_ctl->ae_chn);
+  aenc_fd = hi_mpi_aenc_get_fd(aenc_ctl->ae_chn);
   if (aenc_fd < 0) {
     printf("%s: get aenc fd failed\n", __FUNCTION__);
     goto get_fd_fail;
@@ -992,9 +992,9 @@ void *comm_audio_adec_proc(void *parg) {
     audio_stream.stream = audio_stream_tmp;
     read_len = fread(audio_stream.stream, 1, len, fd);
     if (read_len <= 0) {
-      ret = ss_mpi_adec_send_end_of_stream(adec_chn, TD_FALSE);
+      ret = hi_mpi_adec_send_end_of_stream(adec_chn, TD_FALSE);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_adec_send_end_of_stream failed!\n", __FUNCTION__);
+        printf("%s: hi_mpi_adec_send_end_of_stream failed!\n", __FUNCTION__);
       }
       (td_void) fseek(fd, 0, SEEK_SET); /* read file again */
       continue;
@@ -1003,9 +1003,9 @@ void *comm_audio_adec_proc(void *parg) {
     /* here only demo adec streaming sending mode, but pack sending mode is
      * commended */
     audio_stream.len = read_len;
-    ret = ss_mpi_adec_send_stream(adec_chn, &audio_stream, TD_TRUE);
+    ret = hi_mpi_adec_send_stream(adec_chn, &audio_stream, TD_TRUE);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_adec_send_stream(%d) failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_adec_send_stream(%d) failed with %#x!\n", __FUNCTION__,
              adec_chn, ret);
       break;
     }
@@ -1031,9 +1031,9 @@ void *comm_audio_ao_vol_proc(void *parg) {
 
   while (ao_ctl->start) {
     for (volume = 0; volume <= 6; volume++) { /* 0,6:test range */
-      ret = ss_mpi_ao_set_volume(ao_dev, volume);
+      ret = hi_mpi_ao_set_volume(ao_dev, volume);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
+        printf("%s: hi_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
                ao_dev, ret);
       }
       printf("\rset volume %d          ", volume);
@@ -1041,9 +1041,9 @@ void *comm_audio_ao_vol_proc(void *parg) {
     }
 
     for (volume = 5; volume >= -15; volume--) { /* -15,5:test range */
-      ret = ss_mpi_ao_set_volume(ao_dev, volume);
+      ret = hi_mpi_ao_set_volume(ao_dev, volume);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
+        printf("%s: hi_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
                ao_dev, ret);
       }
       printf("\rset volume %d          ", volume);
@@ -1051,9 +1051,9 @@ void *comm_audio_ao_vol_proc(void *parg) {
     }
 
     for (volume = -14; volume <= 0; volume++) { /* -14,0:test range */
-      ret = ss_mpi_ao_set_volume(ao_dev, volume);
+      ret = hi_mpi_ao_set_volume(ao_dev, volume);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
+        printf("%s: hi_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
                ao_dev, ret);
       }
       printf("\rset volume %d          ", volume);
@@ -1064,17 +1064,17 @@ void *comm_audio_ao_vol_proc(void *parg) {
     fade.fade_in_rate = OT_AUDIO_FADE_RATE_128;
     fade.fade_out_rate = OT_AUDIO_FADE_RATE_128;
 
-    ret = ss_mpi_ao_set_mute(ao_dev, TD_TRUE, &fade);
+    ret = hi_mpi_ao_set_mute(ao_dev, TD_TRUE, &fade);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
              ao_dev, ret);
     }
     printf("\rset ao mute            ");
     sleep(2); /* 2:2s */
 
-    ret = ss_mpi_ao_set_mute(ao_dev, TD_FALSE, NULL);
+    ret = hi_mpi_ao_set_mute(ao_dev, TD_FALSE, NULL);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_ao_set_volume(%d), failed with %#x!\n", __FUNCTION__,
              ao_dev, ret);
     }
     printf("\rset ao unmute          ");
@@ -1301,7 +1301,7 @@ td_s32 comm_audio_ao_bind_adec(ot_audio_dev ao_dev, ot_ao_chn ao_chn,
   dest_chn.dev_id = ao_dev;
   dest_chn.chn_id = ao_chn;
 
-  return ss_mpi_sys_bind(&src_chn, &dest_chn);
+  return hi_mpi_sys_bind(&src_chn, &dest_chn);
 }
 
 /* ao unbind adec */
@@ -1316,7 +1316,7 @@ td_s32 comm_audio_ao_unbind_adec(ot_audio_dev ao_dev, ot_ao_chn ao_chn,
   dest_chn.dev_id = ao_dev;
   dest_chn.chn_id = ao_chn;
 
-  return ss_mpi_sys_unbind(&src_chn, &dest_chn);
+  return hi_mpi_sys_unbind(&src_chn, &dest_chn);
 }
 
 /* ao bind ai */
@@ -1331,7 +1331,7 @@ td_s32 comm_audio_ao_bind_ai(ot_audio_dev ai_dev, ot_ai_chn ai_chn,
   dest_chn.dev_id = ao_dev;
   dest_chn.chn_id = ao_chn;
 
-  return ss_mpi_sys_bind(&src_chn, &dest_chn);
+  return hi_mpi_sys_bind(&src_chn, &dest_chn);
 }
 
 /* ao unbind ai */
@@ -1346,7 +1346,7 @@ td_s32 comm_audio_ao_unbind_ai(ot_audio_dev ai_dev, ot_ai_chn ai_chn,
   dest_chn.dev_id = ao_dev;
   dest_chn.chn_id = ao_chn;
 
-  return ss_mpi_sys_unbind(&src_chn, &dest_chn);
+  return hi_mpi_sys_unbind(&src_chn, &dest_chn);
 }
 
 /* aenc bind ai */
@@ -1361,7 +1361,7 @@ td_s32 comm_audio_aenc_bind_ai(ot_audio_dev ai_dev, ot_ai_chn ai_chn,
   dest_chn.dev_id = 0;
   dest_chn.chn_id = ae_chn;
 
-  return ss_mpi_sys_bind(&src_chn, &dest_chn);
+  return hi_mpi_sys_bind(&src_chn, &dest_chn);
 }
 
 /* aenc unbind ai */
@@ -1376,7 +1376,7 @@ td_s32 comm_audio_aenc_unbind_ai(ot_audio_dev ai_dev, ot_ai_chn ai_chn,
   dest_chn.dev_id = 0;
   dest_chn.chn_id = ae_chn;
 
-  return ss_mpi_sys_unbind(&src_chn, &dest_chn);
+  return hi_mpi_sys_unbind(&src_chn, &dest_chn);
 }
 
 static td_s32 comm_audio_start_ai_vqe(
@@ -1392,17 +1392,17 @@ static td_s32 comm_audio_start_ai_vqe(
         ai_vqe = TD_FALSE;
         break;
       case AUDIO_VQE_TYPE_RECORD:
-        ret = ss_mpi_ai_set_record_vqe_attr(
+        ret = hi_mpi_ai_set_record_vqe_attr(
             ai_dev_id, ai_chn,
             (ot_ai_record_vqe_cfg *)ai_vqe_param->ai_vqe_attr);
         break;
       case AUDIO_VQE_TYPE_TALK:
-        ret = ss_mpi_ai_set_talk_vqe_attr(
+        ret = hi_mpi_ai_set_talk_vqe_attr(
             ai_dev_id, ai_chn, ao_dev_id, ai_chn,
             (ot_ai_talk_vqe_cfg *)ai_vqe_param->ai_vqe_attr);
         break;
       case AUDIO_VQE_TYPE_TALKV2:
-        ret = ss_mpi_ai_set_talk_vqe_v2_attr(
+        ret = hi_mpi_ai_set_talk_vqe_v2_attr(
             ai_dev_id, ai_chn, ao_dev_id, ai_chn,
             (ot_ai_talk_vqe_v2_cfg *)ai_vqe_param->ai_vqe_attr);
         break;
@@ -1417,9 +1417,9 @@ static td_s32 comm_audio_start_ai_vqe(
     }
 
     if (ai_vqe == TD_TRUE) {
-      ret = ss_mpi_ai_enable_vqe(ai_dev_id, ai_chn);
+      ret = hi_mpi_ai_enable_vqe(ai_dev_id, ai_chn);
       if (ret) {
-        printf("%s: ss_mpi_ai_enable_vqe(%d,%d) failed with %#x\n",
+        printf("%s: hi_mpi_ai_enable_vqe(%d,%d) failed with %#x\n",
                __FUNCTION__, ai_dev_id, ai_chn, ret);
         return ret;
       }
@@ -1438,34 +1438,34 @@ td_s32 comm_audio_start_ai(ot_audio_dev ai_dev_id, td_u32 ai_chn_cnt,
   td_s32 ret;
   td_u32 chn_cnt;
 
-  ret = ss_mpi_ai_set_pub_attr(ai_dev_id, aio_attr);
+  ret = hi_mpi_ai_set_pub_attr(ai_dev_id, aio_attr);
   if (ret) {
-    printf("%s: ss_mpi_ai_set_pub_attr(%d) failed with %#x\n", __FUNCTION__,
+    printf("%s: hi_mpi_ai_set_pub_attr(%d) failed with %#x\n", __FUNCTION__,
            ai_dev_id, ret);
     return ret;
   }
 
-  ret = ss_mpi_ai_enable(ai_dev_id);
+  ret = hi_mpi_ai_enable(ai_dev_id);
   if (ret) {
-    printf("%s: ss_mpi_ai_enable(%d) failed with %#x\n", __FUNCTION__,
+    printf("%s: hi_mpi_ai_enable(%d) failed with %#x\n", __FUNCTION__,
            ai_dev_id, ret);
     return ret;
   }
 
   chn_cnt = ai_chn_cnt >> ((td_u32)aio_attr->snd_mode);
   for (i = 0; i < (td_s32)chn_cnt; i++) {
-    ret = ss_mpi_ai_enable_chn(ai_dev_id, i);
+    ret = hi_mpi_ai_enable_chn(ai_dev_id, i);
     if (ret) {
-      printf("%s: ss_mpi_ai_enable_chn(%d,%d) failed with %#x\n", __FUNCTION__,
+      printf("%s: hi_mpi_ai_enable_chn(%d,%d) failed with %#x\n", __FUNCTION__,
              ai_dev_id, i, ret);
       return ret;
     }
 
     if (ai_vqe_param->resample_en == TD_TRUE) {
-      ret = ss_mpi_ai_enable_resample(ai_dev_id, i,
+      ret = hi_mpi_ai_enable_resample(ai_dev_id, i,
                                       ai_vqe_param->out_sample_rate);
       if (ret) {
-        printf("%s: ss_mpi_ai_enable_re_smp(%d,%d) failed with %#x\n",
+        printf("%s: hi_mpi_ai_enable_re_smp(%d,%d) failed with %#x\n",
                __FUNCTION__, ai_dev_id, i, ret);
         return ret;
       }
@@ -1488,7 +1488,7 @@ td_s32 comm_audio_stop_ai(ot_audio_dev ai_dev_id, td_u32 ai_chn_cnt,
 
   for (i = 0; i < (td_s32)ai_chn_cnt; i++) {
     if (resample_en == TD_TRUE) {
-      ret = ss_mpi_ai_disable_resample(ai_dev_id, i);
+      ret = hi_mpi_ai_disable_resample(ai_dev_id, i);
       if (ret != TD_SUCCESS) {
         printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
                "failed");
@@ -1497,7 +1497,7 @@ td_s32 comm_audio_stop_ai(ot_audio_dev ai_dev_id, td_u32 ai_chn_cnt,
     }
 
     if (vqe_en == TD_TRUE) {
-      ret = ss_mpi_ai_disable_vqe(ai_dev_id, i);
+      ret = hi_mpi_ai_disable_vqe(ai_dev_id, i);
       if (ret != TD_SUCCESS) {
         printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
                "failed");
@@ -1505,7 +1505,7 @@ td_s32 comm_audio_stop_ai(ot_audio_dev ai_dev_id, td_u32 ai_chn_cnt,
       }
     }
 
-    ret = ss_mpi_ai_disable_chn(ai_dev_id, i);
+    ret = hi_mpi_ai_disable_chn(ai_dev_id, i);
     if (ret != TD_SUCCESS) {
       printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__,
              "failed");
@@ -1513,7 +1513,7 @@ td_s32 comm_audio_stop_ai(ot_audio_dev ai_dev_id, td_u32 ai_chn_cnt,
     }
   }
 
-  ret = ss_mpi_ai_disable(ai_dev_id);
+  ret = hi_mpi_ai_disable(ai_dev_id);
   if (ret != TD_SUCCESS) {
     printf("[func]:%s [line]:%d [info]:%s\n", __FUNCTION__, __LINE__, "failed");
     return ret;
@@ -1531,49 +1531,49 @@ td_s32 comm_audio_start_ao(ot_audio_dev ao_dev_id, td_u32 ao_chn_cnt,
   td_s32 ret;
   td_u32 chn_cnt;
 
-  ret = ss_mpi_ao_set_pub_attr(ao_dev_id, aio_attr);
+  ret = hi_mpi_ao_set_pub_attr(ao_dev_id, aio_attr);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ao_set_pub_attr(%d) failed with %#x!\n", __FUNCTION__,
+    printf("%s: hi_mpi_ao_set_pub_attr(%d) failed with %#x!\n", __FUNCTION__,
            ao_dev_id, ret);
     return TD_FAILURE;
   }
 
-  ret = ss_mpi_ao_enable(ao_dev_id);
+  ret = hi_mpi_ao_enable(ao_dev_id);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ao_enable(%d) failed with %#x!\n", __FUNCTION__,
+    printf("%s: hi_mpi_ao_enable(%d) failed with %#x!\n", __FUNCTION__,
            ao_dev_id, ret);
     return TD_FAILURE;
   }
 
   chn_cnt = ao_chn_cnt >> ((td_u32)aio_attr->snd_mode);
   for (i = 0; i < (td_s32)chn_cnt; i++) {
-    ret = ss_mpi_ao_enable_chn(ao_dev_id, i);
+    ret = hi_mpi_ao_enable_chn(ao_dev_id, i);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
+      printf("%s: hi_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
              ret);
       return TD_FAILURE;
     }
 
     if (resample_en == TD_TRUE) {
-      ret = ss_mpi_ao_disable_resample(ao_dev_id, i);
+      ret = hi_mpi_ao_disable_resample(ao_dev_id, i);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_disable_resample (%d,%d) failed with %#x!\n",
+        printf("%s: hi_mpi_ao_disable_resample (%d,%d) failed with %#x!\n",
                __FUNCTION__, ao_dev_id, i, ret);
         return TD_FAILURE;
       }
 
-      ret = ss_mpi_ao_enable_resample(ao_dev_id, i, in_sample_rate);
+      ret = hi_mpi_ao_enable_resample(ao_dev_id, i, in_sample_rate);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_enable_resample(%d,%d) failed with %#x!\n",
+        printf("%s: hi_mpi_ao_enable_resample(%d,%d) failed with %#x!\n",
                __FUNCTION__, ao_dev_id, i, ret);
         return TD_FAILURE;
       }
     }
   }
 
-  ret = ss_mpi_ao_enable_chn(ao_dev_id, OT_AO_SYS_CHN_ID);
+  ret = hi_mpi_ao_enable_chn(ao_dev_id, OT_AO_SYS_CHN_ID);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
+    printf("%s: hi_mpi_ao_enable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
            ret);
     return TD_FAILURE;
   }
@@ -1589,31 +1589,31 @@ td_s32 comm_audio_stop_ao(ot_audio_dev ao_dev_id, td_u32 ao_chn_cnt,
 
   for (i = 0; i < (td_s32)ao_chn_cnt; i++) {
     if (resample_en == TD_TRUE) {
-      ret = ss_mpi_ao_disable_resample(ao_dev_id, i);
+      ret = hi_mpi_ao_disable_resample(ao_dev_id, i);
       if (ret != TD_SUCCESS) {
-        printf("%s: ss_mpi_ao_disable_re_smp failed with %#x!\n", __FUNCTION__,
+        printf("%s: hi_mpi_ao_disable_re_smp failed with %#x!\n", __FUNCTION__,
                ret);
         return ret;
       }
     }
 
-    ret = ss_mpi_ao_disable_chn(ao_dev_id, i);
+    ret = hi_mpi_ao_disable_chn(ao_dev_id, i);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_ao_disable_chn failed with %#x!\n", __FUNCTION__, ret);
+      printf("%s: hi_mpi_ao_disable_chn failed with %#x!\n", __FUNCTION__, ret);
       return ret;
     }
   }
 
-  ret = ss_mpi_ao_disable_chn(ao_dev_id, OT_AO_SYS_CHN_ID);
+  ret = hi_mpi_ao_disable_chn(ao_dev_id, OT_AO_SYS_CHN_ID);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ao_disable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
+    printf("%s: hi_mpi_ao_disable_chn(%d) failed with %#x!\n", __FUNCTION__, i,
            ret);
     return TD_FAILURE;
   }
 
-  ret = ss_mpi_ao_disable(ao_dev_id);
+  ret = hi_mpi_ao_disable(ao_dev_id);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_ao_disable failed with %#x!\n", __FUNCTION__, ret);
+    printf("%s: hi_mpi_ao_disable failed with %#x!\n", __FUNCTION__, ret);
     return ret;
   }
 
@@ -1697,9 +1697,9 @@ td_s32 comm_audio_start_aenc(td_u32 aenc_chn_cnt,
   for (i = 0; i < (td_s32)aenc_chn_cnt; i++) {
     ae_chn = i;
     /* create aenc chn */
-    ret = ss_mpi_aenc_create_chn(ae_chn, &aenc_attr);
+    ret = hi_mpi_aenc_create_chn(ae_chn, &aenc_attr);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_aenc_create_chn(%d) failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_aenc_create_chn(%d) failed with %#x!\n", __FUNCTION__,
              ae_chn, ret);
       return ret;
     }
@@ -1714,9 +1714,9 @@ td_s32 comm_audio_stop_aenc(td_u32 aenc_chn_cnt) {
   td_s32 ret;
 
   for (i = 0; i < (td_s32)aenc_chn_cnt; i++) {
-    ret = ss_mpi_aenc_destroy_chn(i);
+    ret = hi_mpi_aenc_destroy_chn(i);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_aenc_destroy_chn(%d) failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_aenc_destroy_chn(%d) failed with %#x!\n", __FUNCTION__,
              i, ret);
       return ret;
     }
@@ -1816,9 +1816,9 @@ td_s32 comm_audio_start_adec(td_u32 adec_chn_cnt,
   /* create adec chn */
   for (i = 0; i < (td_s32)adec_chn_cnt; i++) {
     ad_chn = i;
-    ret = ss_mpi_adec_create_chn(ad_chn, &adec_attr);
+    ret = hi_mpi_adec_create_chn(ad_chn, &adec_attr);
     if (ret != TD_SUCCESS) {
-      printf("%s: ss_mpi_adec_create_chn(%d) failed with %#x!\n", __FUNCTION__,
+      printf("%s: hi_mpi_adec_create_chn(%d) failed with %#x!\n", __FUNCTION__,
              ad_chn, ret);
       return ret;
     }
@@ -1830,9 +1830,9 @@ td_s32 comm_audio_start_adec(td_u32 adec_chn_cnt,
 td_s32 comm_audio_stop_adec(ot_adec_chn ad_chn) {
   td_s32 ret;
 
-  ret = ss_mpi_adec_destroy_chn(ad_chn);
+  ret = hi_mpi_adec_destroy_chn(ad_chn);
   if (ret != TD_SUCCESS) {
-    printf("%s: ss_mpi_adec_destroy_chn(%d) failed with %#x!\n", __FUNCTION__,
+    printf("%s: hi_mpi_adec_destroy_chn(%d) failed with %#x!\n", __FUNCTION__,
            ad_chn, ret);
     return ret;
   }
@@ -1844,11 +1844,11 @@ td_s32 comm_audio_stop_adec(ot_adec_chn ad_chn) {
 td_s32 comm_audio_init(td_void) {
   td_s32 ret;
 
-  ss_mpi_audio_exit();
+  hi_mpi_audio_exit();
 
-  ret = ss_mpi_audio_init();
+  ret = hi_mpi_audio_init();
   if (ret != TD_SUCCESS) {
-    sample_print("ss_mpi_audio_init failed!\n");
+    sample_print("hi_mpi_audio_init failed!\n");
     return TD_FAILURE;
   }
 
@@ -1857,6 +1857,6 @@ td_s32 comm_audio_init(td_void) {
 
 /* audio system exit */
 td_void comm_audio_exit(td_void) {
-  ss_mpi_audio_exit();
+  hi_mpi_audio_exit();
   return;
 }

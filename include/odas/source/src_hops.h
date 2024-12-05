@@ -100,7 +100,7 @@ void src_hops_open_interface_soundcard(src_hops_obj *obj);
 
 void src_hops_open_interface_pulseaudio(src_hops_obj *obj);
 
-void src_hops_open_interface_customized_pcm(src_hops_obj *obj);
+void src_hops_open_interface_uac_in(src_hops_obj *obj);
 
 void src_hops_open_interface_socket(src_hops_obj *obj);
 
@@ -112,7 +112,7 @@ void src_hops_close_interface_soundcard(src_hops_obj *obj);
 
 void src_hops_close_interface_pulseaudio(src_hops_obj *obj);
 
-void src_hops_close_interface_customized_pcm(src_hops_obj *obj);
+void src_hops_close_interface_uac_in(src_hops_obj *obj);
 
 void src_hops_close_interface_socket(src_hops_obj *obj);
 
@@ -126,7 +126,7 @@ int src_hops_process_interface_socket(src_hops_obj *obj);
 
 int src_hops_process_interface_pulseaudio(src_hops_obj *obj);
 
-int src_hops_process_interface_customized_pcm(src_hops_obj *obj);
+int src_hops_process_interface_uac_in(src_hops_obj *obj);
 
 void src_hops_process_format_binary_int08(src_hops_obj *obj);
 

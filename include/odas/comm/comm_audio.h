@@ -12,8 +12,8 @@
 #include "ot_mipi_rx.h"
 #include "ot_mipi_tx.h"
 #include "securec.h"
-#include "ss_mpi_audio.h"
-#include "ss_mpi_sys_bind.h"
+#include "hi_mpi_audio.h"
+#include "hi_mpi_sys_bind.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -182,10 +182,10 @@ src_hops_cfg *parameters_src_hops_mics_config(const char *fileConfig) {
 
     free((void *)tmpStr2);
 
-  } else if (strcmp(tmpStr1, "customizedpcm") == 0) {
+  } else if (strcmp(tmpStr1, "uacin") == 0) {
     tmpStr2 = parameters_lookup_string(fileConfig, "raw.interface.source");
 
-    cfg->interface = interface_construct_customized_pcm(tmpStr2);
+    cfg->interface = interface_construct_uac_in(tmpStr2);
     // cfg->channel_map = parameters_pa_channel_map_config(fileConfig);
 
     free((void *)tmpStr2);
@@ -1772,6 +1772,12 @@ snk_hops_cfg *parameters_snk_hops_seps_vol_config(const char *fileConfig) {
 
   } else if (strcmp(tmpStr1, "terminal") == 0) {
     cfg->interface = interface_construct_terminal();
+
+  } else if (strcmp(tmpStr1, "uacout") == 0) {
+    tmpStr2 =
+        parameters_lookup_string(fileConfig, "sss.separated.interface.source");
+    cfg->interface = interface_construct_uac_out(tmpStr2);
+    free((void *)tmpStr2);
 
   } else {
     printf("sss.separated.interface.type: Invalid type\n");

@@ -83,7 +83,7 @@ src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
   if (!((obj->interface->type == interface_file ||
          obj->interface->type == interface_soundcard ||
          obj->interface->type == interface_pulseaudio ||
-         obj->interface->type == interface_customized_pcm ||
+         obj->interface->type == interface_uac_in ||
          obj->interface->type == interface_socket) &&
         (obj->format->type == format_binary_int08 ||
          obj->format->type == format_binary_int16 ||
@@ -148,9 +148,9 @@ void src_hops_open(src_hops_obj *obj) {
       src_hops_open_interface_pulseaudio(obj);
 
       break;
-    case interface_customized_pcm:
+    case interface_uac_in:
 
-      src_hops_open_interface_customized_pcm(obj);
+      src_hops_open_interface_uac_in(obj);
 
       break;
 
@@ -321,7 +321,7 @@ void src_hops_open_interface_pulseaudio(src_hops_obj *obj) {
   }
 }
 
-void src_hops_open_interface_customized_pcm(src_hops_obj *obj) {
+void src_hops_open_interface_uac_in(src_hops_obj *obj) {
   obj->sps.ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
   obj->sps.chn = obj->nChannels;
   obj->sps.sample_rate = obj->fS;
@@ -386,9 +386,9 @@ void src_hops_close(src_hops_obj *obj) {
 
       break;
 
-    case interface_customized_pcm:
+    case interface_uac_in:
 
-      src_hops_close_interface_customized_pcm(obj);
+      src_hops_close_interface_uac_in(obj);
 
       break;
 
@@ -417,8 +417,8 @@ void src_hops_close_interface_pulseaudio(src_hops_obj *obj) {
   if (obj->pa != NULL) pa_simple_free(obj->pa);
 }
 
-void src_hops_close_interface_customized_pcm(src_hops_obj *obj) {
-  if (obj->pa != NULL) pa_simple_free(obj->pa);
+void src_hops_close_interface_uac_in(src_hops_obj *obj) {
+  if (obj->sps.init == TD_TRUE) src_pcm_destory(&obj->sps);
 }
 
 void src_hops_close_interface_socket(src_hops_obj *obj) { close(obj->sid); }
@@ -478,9 +478,9 @@ int src_hops_process(src_hops_obj *obj) {
 
       break;
 
-    case interface_customized_pcm:
+    case interface_uac_in:
 
-      rtnValue = src_hops_process_interface_customized_pcm(obj);
+      rtnValue = src_hops_process_interface_uac_in(obj);
 
       break;
 
@@ -549,7 +549,7 @@ int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
   return rtnValue;
 }
 
-int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
+int src_hops_process_interface_uac_in(src_hops_obj *obj) {
   int offset = 0;
   int size_per_sample = obj->format->type / 8;
   int frame_len = obj->hopSize;
@@ -586,7 +586,7 @@ int src_hops_process_interface_customized_pcm(src_hops_obj *obj) {
   }
 
   // write to file
-  src_hops_save_to_file(obj);
+  // src_hops_save_to_file(obj);
 
   return 0;
 }

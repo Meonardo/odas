@@ -258,7 +258,7 @@ interface_obj *interface_construct_pulseaudio(const char *sourceName) {
   return obj;
 }
 
-interface_obj *interface_construct_customized_pcm(const char *sourceName) {
+interface_obj *interface_construct_uac_in(const char *sourceName) {
   interface_obj *obj;
 
   obj = (interface_obj *)malloc(sizeof(interface_obj));
@@ -267,7 +267,7 @@ interface_obj *interface_construct_customized_pcm(const char *sourceName) {
   // | Type                                                     |
   // +----------------------------------------------------------+
 
-  obj->type = interface_customized_pcm;
+  obj->type = interface_uac_in;
 
   // +----------------------------------------------------------+
   // | Blackhole                                                |
@@ -408,6 +408,48 @@ interface_obj *interface_construct_terminal(void) {
   return obj;
 }
 
+interface_obj *interface_construct_uac_out(const char *device_name) {
+  interface_obj *obj;
+
+  obj = (interface_obj *)malloc(sizeof(interface_obj));
+
+  // +----------------------------------------------------------+
+  // | Type                                                     |
+  // +----------------------------------------------------------+
+
+  obj->type = interface_uac_out;
+
+  // +----------------------------------------------------------+
+  // | Blackhole                                                |
+  // +----------------------------------------------------------+
+
+  // (Empty)
+
+  // +----------------------------------------------------------+
+  // | File                                                     |
+  // +----------------------------------------------------------+
+
+  obj->fileName = (char *)NULL;
+
+  // +----------------------------------------------------------+
+  // | Socket                                                   |
+  // +----------------------------------------------------------+
+
+  obj->ip = (char *)NULL;
+  obj->port = 0;
+
+  obj->deviceName = (char *)malloc(sizeof(char) * (strlen(device_name) + 1));
+  strcpy(obj->deviceName, device_name);
+
+  // +----------------------------------------------------------+
+  // | Terminal                                                 |
+  // +----------------------------------------------------------+
+
+  // (Empty)
+
+  return obj;
+}
+
 interface_obj *interface_clone(const interface_obj *obj) {
   interface_obj *clone;
 
@@ -449,7 +491,8 @@ interface_obj *interface_clone(const interface_obj *obj) {
   // | Soundcard or Pulseaudio                                  |
   // +----------------------------------------------------------+
 
-  if (obj->type == interface_soundcard || obj->type == interface_pulseaudio) {
+  if (obj->type == interface_soundcard || obj->type == interface_pulseaudio ||
+      obj->type == interface_uac_out) {
     clone->deviceName =
         (char *)malloc(sizeof(char) * (strlen(obj->deviceName) + 1));
     strcpy(clone->deviceName, obj->deviceName);
@@ -510,6 +553,17 @@ void interface_printf(const interface_obj *obj) {
       case interface_pulseaudio:
 
         printf("type = pulseaudio, devicename = %s\n", obj->deviceName);
+
+        break;
+      case interface_uac_in:
+
+        printf("type = UAC source, devicename = %s\n",
+               obj->deviceName);
+
+        break;
+      case interface_uac_out:
+
+        printf("type = UAC sink, devicename = %s\n", obj->deviceName);
 
         break;
 
