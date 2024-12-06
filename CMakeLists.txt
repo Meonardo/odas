@@ -12,8 +12,6 @@ option(ODAS_INSTALL_EXECUTABLES "Install the odaslive and odasserver executables
 option(ODAS_FORCE_BIN_AND_LIB_DIRS "Force the installation of the odas library and executables in the bin and lib directories" ON)
 option(ODAS_DISABLE_INSTALL "Disable the installation of the odas library and executables" OFF)
 
-option(UAC_SRC_SINK "Enable customized PCM source & sink" OFF)
-
 
 # find_package(PkgConfig REQUIRED)
 # pkg_check_modules(PC_FFTW3 REQUIRED fftw3f)
@@ -234,58 +232,6 @@ target_include_directories(
     ${PULSEAUDIO}/include
 )
 
-if (UAC_SRC_SINK)
-    target_sources(
-        odas
-        PRIVATE
-
-        ${CMAKE_SOURCE_DIR}/src/comm/comm_audio.c
-        ${CMAKE_SOURCE_DIR}/include/odas/comm/comm_audio.h
-    )
-    target_link_libraries(
-        odas
-        PUBLIC
-
-        ${HI3519_ROOT}/lib/libsecurec.so
-        ${HI3519_ROOT}/lib/libmp3_enc.so
-        ${HI3519_ROOT}/lib/libmp3_lame.so
-        ${HI3519_ROOT}/lib/libmp3_dec.so
-        ${HI3519_ROOT}/lib/libvoice_engine.so
-        ${HI3519_ROOT}/lib/libupvqe.so
-        ${HI3519_ROOT}/lib/libdnvqe.so
-
-        # mpi
-        ${HI3519_ROOT}/lib/libhi_mpi_audio.so
-        ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
-        ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
-        ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
-
-        # aac
-        ${HI3519_ROOT}/lib/libaac_comm.so
-        ${HI3519_ROOT}/lib/libaac_dec.so
-        ${HI3519_ROOT}/lib/libaac_enc.so
-        ${HI3519_ROOT}/lib/libaac_sbr_dec.so
-        ${HI3519_ROOT}/lib/libaac_sbr_enc.so
-
-        # opus
-        ${HI3519_ROOT}/lib/libopus.so
-    )
-    target_include_directories(
-        odas
-        PUBLIC
-
-        # Hi3519
-        ${HI3519_ROOT}/include
-    )
-    target_compile_definitions(
-        odas
-        PUBLIC
-
-        OT_ACODEC_TYPE_INNER
-        UAC_SRC_SINK
-    )
-endif () 
-
 # app
 add_executable(
     odaslive
@@ -331,8 +277,8 @@ add_executable(
     uac
 
     demo/odascore/uac.c
-    ${CMAKE_SOURCE_DIR}/src/comm/comm_audio.c
-    ${CMAKE_SOURCE_DIR}/include/odas/comm/comm_audio.h
+    demo/odascore/comm_audio.c
+    demo/odascore/comm_audio.h
 )
 
 target_include_directories(

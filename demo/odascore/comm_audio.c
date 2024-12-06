@@ -13,7 +13,7 @@
 
 #include "ot_audio_mp3_adp.h"
 #include "ot_audio_opus_adp.h"
-#include "comm/comm_audio.h"
+#include "comm_audio.h"
 #include "hi_audio_aac_adp.h"
 #ifdef OT_ACODEC_TYPE_INNER
 #include "ot_acodec.h"

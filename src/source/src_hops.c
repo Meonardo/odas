@@ -325,26 +325,6 @@ void src_hops_open_interface_uac_in(src_hops_obj *obj) {
   obj->sps.chn = obj->nChannels;
   obj->sps.per_frame = obj->hopSize;
   obj->sps.init = 0;
-#ifdef UAC_SRC_SINK
-  obj->sps.sample_rate = obj->fS;
-  obj->sps.ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
-
-  switch (obj->format->type) {
-    case format_binary_int08:
-      obj->sps.bit_width = OT_AUDIO_BIT_WIDTH_8;
-      break;
-    case format_binary_int16:
-      obj->sps.bit_width = OT_AUDIO_BIT_WIDTH_16;
-      break;
-    case format_binary_int24:
-      obj->sps.bit_width = OT_AUDIO_BIT_WIDTH_24;
-      break;
-    default:
-      printf("%s,%d Source hops: Invalid format for PCM source.\n",
-             __FUNCTION__, __LINE__);
-      break;
-  }
-#else
   obj->sps.buffer = NULL;
   obj->sps.rb = NULL;
   switch (obj->format->type) {
@@ -362,10 +342,9 @@ void src_hops_open_interface_uac_in(src_hops_obj *obj) {
              __FUNCTION__, __LINE__);
       break;
   }
-#endif
 
   if (src_pcm_init(&obj->sps) != 0) {
-    printf("%s,%d Source hops: Cannot init customized PCM source.\n",
+    printf("%s,%d Source hops: Cannot init PCM source.\n",
            __FUNCTION__, __LINE__);
     return;
   }

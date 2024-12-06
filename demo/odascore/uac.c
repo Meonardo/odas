@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "comm/comm_audio.h"
+#include "comm_audio.h"
 #include "odascore.h"
 
 #define DMIC_GAIN 90 /* 90: 24dB */
@@ -63,6 +63,20 @@ typedef struct {
   odascore_t* odascore;
 
 } uac_spec;
+
+static FILE* test_input_file = NULL;
+
+static void test_save_to_file(void* buffer, size_t len) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/sss.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  fwrite(buffer, 1, len, test_input_file);
+}
 
 static int uac_alsa_playback_set_sw_param(uac_spec* obj) {
   int err;
@@ -270,7 +284,40 @@ static void uac_alsa_playback_deinit(uac_spec* obj) {
 /////////////////////////////////////////////////////////////////////////////////
 
 static void on_odasbuf(const char* buf, size_t len, void* user_data) {
-    printf("on_odasbuf: len=%zu\n", len);
+  printf("on_odasbuf: len=%zu\n", len);
+  
+  test_save_to_file(buf, len);
+
+//   uac_spec* obj = (uac_spec*)user_data;
+
+//   // send to UAC
+//   int err;
+//   int send_finish_status = 0;
+
+//   while (send_finish_status == 0) {
+//     err = snd_pcm_wait(obj->uac_hdl, PCM_WAIT_TIME_MS);
+//     if (err == 0) {
+//       continue;
+//     }
+
+//     err = snd_pcm_writei(obj->uac_hdl, buf, obj->uac_period_size);
+//     if (err == -EPIPE) {
+//       /* EPIPE means underrun */
+//       printf("[%s:%d] snd_pcm_writei: underrun occurred, err=%d \n",
+//              __FUNCTION__, __LINE__, err);
+//       snd_pcm_prepare(obj->uac_hdl);
+//     } else if (err < 0) {
+//       printf("[%s:%d] snd_pcm_writei: error from writei: %s\n", __FUNCTION__,
+//              __LINE__, snd_strerror(err));
+//       break;
+//     } else if (err != (int)obj->uac_period_size) {
+//       printf("[%s:%d] snd_pcm_writei: wrote %d frames\n", __FUNCTION__,
+//              __LINE__, err);
+//       break;
+//     } else {
+//       send_finish_status = 1;
+//     }
+//   }
 }
 
 /// ai configurations
@@ -447,7 +494,7 @@ static int uac_init(uac_spec* obj) {
 }
 
 static void uac_destory(uac_spec* obj) {
-  if (obj->init == 1) {
+  if (obj->init == 0) {
     printf("[%s] uac_spec already destory!\n", __FUNCTION__);
     return;
   }
@@ -519,7 +566,7 @@ int main() {
   sigaction(SIGINT, &act, NULL);
   sigaction(SIGTERM, &act, NULL);
 
-  uac_spec obj = {0};  
+  uac_spec obj = {0};
   obj.chn = 8;
   obj.per_frame = 480;
   obj.sample_rate = OT_AUDIO_SAMPLE_RATE_48000;
@@ -527,8 +574,7 @@ int main() {
   obj.bit_width = OT_AUDIO_BIT_WIDTH_16;
 
   if (uac_init(&obj) != 0) {
-    printf("%s,%d Cannot init uac source.\n",
-           __FUNCTION__, __LINE__);
+    printf("%s,%d Cannot init uac source.\n", __FUNCTION__, __LINE__);
     return -1;
   }
 

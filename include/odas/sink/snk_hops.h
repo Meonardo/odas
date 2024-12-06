@@ -64,17 +64,8 @@ typedef struct snk_hops_obj {
   struct sockaddr_in sserver;
   int sid;
 
-#ifdef UAC_SRC_SINK
-  // uac stuff
-  snd_pcm_t *uac_hdl;
-  snd_pcm_hw_params_t *uac_hw_params;
-  snd_pcm_sw_params_t *uac_sw_params;
-  snd_pcm_uframes_t uac_period_size;
-  unsigned int uac_channels;
-#else
   uacout_callback uac_out_cb;
   void* uac_out_ud;
-#endif  
 
   char bytes[4];
 
