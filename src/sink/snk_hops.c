@@ -52,6 +52,7 @@ static void snk_hops_save_to_file(msg_hops_obj *obj) {
 
 //////////////////////////////////////////////////////////////////////////
 /// UAC stuff
+#ifdef UAC_SRC_SINK
 
 static int uac_alsa_playback_set_sw_param(snk_hops_obj *obj) {
   int err;
@@ -255,6 +256,7 @@ static void uac_alsa_playback_deinit(snk_hops_obj *obj) {
     obj->uac_hdl = NULL;
   }
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -314,10 +316,15 @@ snk_hops_obj *snk_hops_construct(const snk_hops_cfg *snk_hops_config,
 
   obj->in = (msg_hops_obj *)NULL;
 
+#ifdef UAC_SRC_SINK
   // UAC sink
   obj->uac_hdl = NULL;
   obj->uac_hw_params = NULL;
   obj->uac_sw_params = NULL;
+#else
+  obj->uac_out_cb = NULL;
+  obj->uac_out_ud = NULL;
+#endif
 
   return obj;
 }
@@ -398,13 +405,14 @@ void snk_hops_open_interface_socket(snk_hops_obj *obj) {
 }
 
 void snk_hops_open_interface_uac_out(snk_hops_obj *obj) {
+#ifdef UAC_SRC_SINK
   int err;
-
   err = uac_alsa_playback_init(obj);
   if (err != 0) {
     printf("Cannot open UAC device\n");
     exit(EXIT_FAILURE);
   }
+#endif
 }
 
 void snk_hops_close(snk_hops_obj *obj) {
@@ -451,7 +459,12 @@ void snk_hops_close_interface_file(snk_hops_obj *obj) { fclose(obj->fp); }
 void snk_hops_close_interface_socket(snk_hops_obj *obj) { close(obj->sid); }
 
 void snk_hops_close_interface_uac_out(snk_hops_obj *obj) {
+#ifdef UAC_SRC_SINK
   uac_alsa_playback_deinit(obj);
+#else
+  obj->uac_out_cb = NULL;
+  obj->uac_out_ud = NULL;
+#endif
 }
 
 int snk_hops_process(snk_hops_obj *obj) {
@@ -555,6 +568,7 @@ void snk_hops_process_interface_socket(snk_hops_obj *obj) {
 }
 
 void snk_hops_process_interface_uac_out(snk_hops_obj *obj) {
+#ifdef UAC_SRC_SINK
   // send to UAC
   int err;
   int send_finish_status = 0;
@@ -568,8 +582,8 @@ void snk_hops_process_interface_uac_out(snk_hops_obj *obj) {
     err = snd_pcm_writei(obj->uac_hdl, obj->buffer, obj->uac_period_size);
     if (err == -EPIPE) {
       /* EPIPE means underrun */
-      printf("[%s:%d] snd_pcm_writei: underrun occurred, err=%d \n", __FUNCTION__,
-             __LINE__, err);
+      printf("[%s:%d] snd_pcm_writei: underrun occurred, err=%d \n",
+             __FUNCTION__, __LINE__, err);
       snd_pcm_prepare(obj->uac_hdl);
     } else if (err < 0) {
       printf("[%s:%d] snd_pcm_writei: error from writei: %s\n", __FUNCTION__,
@@ -583,6 +597,11 @@ void snk_hops_process_interface_uac_out(snk_hops_obj *obj) {
       send_finish_status = 1;
     }
   }
+#else
+  if (obj->uac_out_cb != NULL) {
+    obj->uac_out_cb(obj->buffer, obj->bufferSize, obj->uac_out_ud);
+  }
+#endif
 }
 
 void snk_hops_process_format_binary_int08(snk_hops_obj *obj) {

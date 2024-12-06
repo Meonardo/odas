@@ -12,7 +12,7 @@ option(ODAS_INSTALL_EXECUTABLES "Install the odaslive and odasserver executables
 option(ODAS_FORCE_BIN_AND_LIB_DIRS "Force the installation of the odas library and executables in the bin and lib directories" ON)
 option(ODAS_DISABLE_INSTALL "Disable the installation of the odas library and executables" OFF)
 
-option(CUSTOM_PCM_SRC_SINK "Enable customized PCM source & sink" ON)
+option(UAC_SRC_SINK "Enable customized PCM source & sink" OFF)
 
 
 # find_package(PkgConfig REQUIRED)
@@ -197,6 +197,9 @@ set(SRC
     src/sink/snk_tracks.c
     src/source/src_hops.c
     src/source/src_pcm.c
+
+    ${CMAKE_SOURCE_DIR}/include/odas/comm/aml_ringbuffer.h
+    ${CMAKE_SOURCE_DIR}/src/comm/aml_ringbuffer.c
 )
 
 add_library(odas SHARED
@@ -231,7 +234,7 @@ target_include_directories(
     ${PULSEAUDIO}/include
 )
 
-if (CUSTOM_PCM_SRC_SINK)
+if (UAC_SRC_SINK)
     target_sources(
         odas
         PRIVATE
@@ -279,7 +282,7 @@ if (CUSTOM_PCM_SRC_SINK)
         PUBLIC
 
         OT_ACODEC_TYPE_INNER
-        CUSTOM_PCM_SRC_SINK
+        UAC_SRC_SINK
     )
 endif () 
 
@@ -301,6 +304,87 @@ target_link_libraries(
 
     odas
 )
+
+add_library(
+    odascore
+    SHARED
+
+    demo/odascore/odascore.c
+    demo/odascore/odascore.h
+
+    demo/odaslive/configs.c
+    demo/odaslive/objects.c
+    demo/odaslive/parameters.c
+    demo/odaslive/profiler.c
+    demo/odaslive/threads.c
+)
+
+target_link_libraries(
+    odascore
+    PRIVATE
+
+    odas
+)
+
+# uac example 
+add_executable(
+    uac
+
+    demo/odascore/uac.c
+    ${CMAKE_SOURCE_DIR}/src/comm/comm_audio.c
+    ${CMAKE_SOURCE_DIR}/include/odas/comm/comm_audio.h
+)
+
+target_include_directories(
+    uac
+    PUBLIC
+
+    # Hi3519
+    ${HI3519_ROOT}/include
+    ${ALSA}/include
+)
+
+target_link_libraries(
+    uac
+    PUBLIC
+
+    odascore
+
+    ${HI3519_ROOT}/lib/libsecurec.so
+    ${HI3519_ROOT}/lib/libmp3_enc.so
+    ${HI3519_ROOT}/lib/libmp3_lame.so
+    ${HI3519_ROOT}/lib/libmp3_dec.so
+    ${HI3519_ROOT}/lib/libvoice_engine.so
+    ${HI3519_ROOT}/lib/libupvqe.so
+    ${HI3519_ROOT}/lib/libdnvqe.so
+
+    # mpi
+    ${HI3519_ROOT}/lib/libhi_mpi_audio.so
+    ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
+    ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
+    ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
+
+    # aac
+    ${HI3519_ROOT}/lib/libaac_comm.so
+    ${HI3519_ROOT}/lib/libaac_dec.so
+    ${HI3519_ROOT}/lib/libaac_enc.so
+    ${HI3519_ROOT}/lib/libaac_sbr_dec.so
+    ${HI3519_ROOT}/lib/libaac_sbr_enc.so
+
+    # opus
+    ${HI3519_ROOT}/lib/libopus.so
+
+    ${ALSA}/lib/libasound.so
+)
+
+target_compile_definitions(
+        uac
+        PUBLIC
+
+        OT_ACODEC_TYPE_INNER
+        USE_DMIC
+)
+# end of uac example
 
 if (NOT ODAS_DISABLE_INSTALL)
     install(TARGETS odas LIBRARY DESTINATION lib)

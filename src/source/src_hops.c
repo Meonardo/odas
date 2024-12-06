@@ -322,11 +322,12 @@ void src_hops_open_interface_pulseaudio(src_hops_obj *obj) {
 }
 
 void src_hops_open_interface_uac_in(src_hops_obj *obj) {
-  obj->sps.ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
   obj->sps.chn = obj->nChannels;
-  obj->sps.sample_rate = obj->fS;
   obj->sps.per_frame = obj->hopSize;
-  obj->sps.init = TD_FALSE;
+  obj->sps.init = 0;
+#ifdef UAC_SRC_SINK
+  obj->sps.sample_rate = obj->fS;
+  obj->sps.ai_dev = SAMPLE_AUDIO_INNER_AI_DEV;
 
   switch (obj->format->type) {
     case format_binary_int08:
@@ -343,8 +344,27 @@ void src_hops_open_interface_uac_in(src_hops_obj *obj) {
              __FUNCTION__, __LINE__);
       break;
   }
+#else
+  obj->sps.buffer = NULL;
+  obj->sps.rb = NULL;
+  switch (obj->format->type) {
+    case format_binary_int08:
+      obj->sps.frame_size = sizeof(char);
+      break;
+    case format_binary_int16:
+      obj->sps.frame_size = sizeof(char) * 2;
+      break;
+    case format_binary_int24:
+      obj->sps.frame_size = sizeof(char) * 3;
+      break;
+    default:
+      printf("%s,%d Source hops: Invalid format for PCM source.\n",
+             __FUNCTION__, __LINE__);
+      break;
+  }
+#endif
 
-  if (src_pcm_init(&(obj->sps)) == TD_FAILURE) {
+  if (src_pcm_init(&obj->sps) != 0) {
     printf("%s,%d Source hops: Cannot init customized PCM source.\n",
            __FUNCTION__, __LINE__);
     return;
@@ -418,7 +438,7 @@ void src_hops_close_interface_pulseaudio(src_hops_obj *obj) {
 }
 
 void src_hops_close_interface_uac_in(src_hops_obj *obj) {
-  if (obj->sps.init == TD_TRUE) src_pcm_destory(&obj->sps);
+  src_pcm_destory(&obj->sps);
 }
 
 void src_hops_close_interface_socket(src_hops_obj *obj) { close(obj->sid); }
@@ -550,40 +570,42 @@ int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
 }
 
 int src_hops_process_interface_uac_in(src_hops_obj *obj) {
-  int offset = 0;
-  int size_per_sample = obj->format->type / 8;
-  int frame_len = obj->hopSize;
+  // int offset = 0;
+  // int size_per_sample = obj->format->type / 8;
+  // int frame_len = obj->hopSize;
 
-  // read frame for each channel
-  for (int i = 0; i < obj->sps.chn; i++) {
-    src_pcm_item *item = &obj->sps.items[i];
-    if (src_pcm_read_frame(&obj->sps, item) != TD_SUCCESS) {
-      printf("Cannot read frame for channel %d\n", i);
-      return -1;  // WARN: memory leak, not release the read frames
-    }
-  }
+  // // read frame for each channel
+  // for (int i = 0; i < obj->sps.chn; i++) {
+  //   src_pcm_item *item = &obj->sps.items[i];
+  //   if (src_pcm_read_frame(&obj->sps, item) != TD_SUCCESS) {
+  //     printf("Cannot read frame for channel %d\n", i);
+  //     return -1;  // WARN: memory leak, not release the read frames
+  //   }
+  // }
 
-  // copy each channel data to buffer
-  // the memory layout of the `buffer` will be interleaved
-  // for example of 8 channels and 480 samples
-  // [ch1 sample1] [ch2 sample1] ... [ch8 sample1]
-  // [ch1 sample2] [ch2 sample2] ... [ch8 sample2]
-  // ...
-  // [ch1 sample480] [ch2 sample480] ... [ch8 sample480]
-  for (int i = 0; i < frame_len; i++) {
-    for (int j = 0; j < obj->sps.chn; j++) {
-      src_pcm_item *item = &obj->sps.items[j];
-      td_u8 *data = item->frame.virt_addr[0];
-      offset = i * obj->sps.chn * size_per_sample + j * size_per_sample;
-      memcpy(obj->buffer + offset, data + i * size_per_sample, size_per_sample);
-    }
-  }
+  // // copy each channel data to buffer
+  // // the memory layout of the `buffer` will be interleaved
+  // // for example of 8 channels and 480 samples
+  // // [ch1 sample1] [ch2 sample1] ... [ch8 sample1]
+  // // [ch1 sample2] [ch2 sample2] ... [ch8 sample2]
+  // // ...
+  // // [ch1 sample480] [ch2 sample480] ... [ch8 sample480]
+  // for (int i = 0; i < frame_len; i++) {
+  //   for (int j = 0; j < obj->sps.chn; j++) {
+  //     src_pcm_item *item = &obj->sps.items[j];
+  //     td_u8 *data = item->frame.virt_addr[0];
+  //     offset = i * obj->sps.chn * size_per_sample + j * size_per_sample;
+  //     memcpy(obj->buffer + offset, data + i * size_per_sample, size_per_sample);
+  //   }
+  // }
 
-  // release frames
-  for (int i = 0; i < obj->sps.chn; i++) {
-    src_pcm_item *item = &obj->sps.items[i];
-    src_pcm_release_frame(&obj->sps, item);
-  }
+  // // release frames
+  // for (int i = 0; i < obj->sps.chn; i++) {
+  //   src_pcm_item *item = &obj->sps.items[i];
+  //   src_pcm_release_frame(&obj->sps, item);
+  // }
+
+  src_pcm_read_buffer(&obj->sps, obj->buffer, obj->bufferSize);
 
   // write to file
   // src_hops_save_to_file(obj);

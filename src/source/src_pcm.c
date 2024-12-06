@@ -12,6 +12,21 @@
 
 #define DMIC_GAIN 90 /* 90: 24dB */
 
+static FILE* test_input_file = NULL;
+
+static void src_hops_save_to_file1(void* buffer, size_t len) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/input1.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  fwrite(buffer, 1, len, test_input_file);
+}
+
+#ifdef UAC_SRC_SINK
 static td_void init_params(ot_aio_attr* ai_attr, ot_audio_dev* ai_dev,
                            src_pcm_spec* obj) {
   ai_attr->sample_rate = obj->sample_rate;
@@ -47,14 +62,103 @@ static td_s32 app_audio_select(td_s32 ai_fd, fd_set* read_fds) {
   return TD_SUCCESS;
 }
 
-td_s32 src_pcm_init(src_pcm_spec* obj) {
-  td_s32 ret;
+static void* src_pcm_worker(void* arg) {
+  int ret;
+  src_pcm_spec* obj = (src_pcm_spec*)arg;
 
+  // create a ring buffer
+  if (obj->rb == NULL) {
+    obj->rb = (ring_buffer_t*)malloc(sizeof(ring_buffer_t));
+    size_t buffer_size = obj->per_frame * obj->chn * 2;
+    obj->buffer = (uint8_t*)malloc(buffer_size);
+    ret = ring_buffer_init(obj->rb, buffer_size * 4);
+    if (ret != 0) {
+      printf("[%s] ring_buffer_init failed with %d!\n", __FUNCTION__, ret);
+      return NULL;
+    }
+  }
+
+  while (obj->running) {
+
+    // read frame from the ai chn
+    for (int i = 0; i < obj->chn; i++) {
+      src_pcm_item* item = &obj->items[i];
+      ret = app_audio_select(item->ai_fd, &item->read_fds);
+      if (ret != TD_SUCCESS) {
+        printf("%s: app_audio_select failed with %d!\n", __FUNCTION__, ret);
+        break;
+      }
+
+      if (FD_ISSET(item->ai_fd, &(item->read_fds))) {
+        /* get frame from ai chn */
+        ret = hi_mpi_ai_get_frame(obj->ai_dev, item->chn, &item->frame, NULL,
+                                  TD_FALSE);
+        if (ret != TD_SUCCESS) {
+          printf("[%s] hi_mpi_ai_get_frame failed with %d!\n", __FUNCTION__,
+                 ret);
+          break;
+        }
+      }
+    }
+
+    // interleave the frame data
+    int offset = 0;
+    int size_per_sample = sizeof(int16_t); // 2 bytes
+    int samples = obj->per_frame;          // 1024 samples
+    for (int i = 0; i < samples; i++) {
+      for (int j = 0; j < obj->chn; j++) {
+        src_pcm_item* item = &obj->items[j];
+        td_u8* data = item->frame.virt_addr[0];
+        offset = i * obj->chn * size_per_sample + j * size_per_sample;
+        memcpy(obj->buffer + offset, data + i * size_per_sample,
+               size_per_sample);
+      }
+    }
+
+    // src_hops_save_to_file1(obj->buffer, samples * obj->chn * size_per_sample);
+
+    // write to ring buffer
+    ring_buffer_write(obj->rb, obj->buffer,
+                      samples * obj->chn * size_per_sample, 0);
+
+    // release frame
+    for (int i = 0; i < obj->chn; i++) {
+      src_pcm_item* item = &obj->items[i];
+      ret = hi_mpi_ai_release_frame(obj->ai_dev, item->chn, &item->frame, NULL);
+      if (ret != TD_SUCCESS) {
+        printf("[%s] hi_mpi_ai_release_frame failed with %d!\n", __FUNCTION__, ret);
+        break;
+      }
+    }
+  }
+
+  // free resources
+  if (obj->rb != NULL) {
+    ring_buffer_release(obj->rb);
+    free(obj->rb);
+    free(obj->buffer);
+    obj->buffer = NULL;
+  }
+
+  return NULL;
+}
+
+#endif
+
+int src_pcm_init(src_pcm_spec* obj) {
+  if (obj->init == 1) {
+    printf("[%s] src_pcm_spec already init!\n", __FUNCTION__);
+    return 0;
+  }
+
+  int ret;
+
+#ifdef UAC_SRC_SINK
   // init audio module
   ret = comm_audio_init();
-  if (ret != TD_SUCCESS) {
+  if (ret != 0) {
     printf("[%s] audio init failed with %d!\n", __FUNCTION__, ret);
-    return TD_FAILURE;
+    return ret;
   }
 
   comm_ai_vqe_param ai_vqe_param = {};
@@ -107,24 +211,65 @@ td_s32 src_pcm_init(src_pcm_spec* obj) {
     printf("[%s] ai(%d,%d) fd = %d\n", __FUNCTION__, obj->ai_dev, i, ai_fd);
   }
 
+  // launch a worker thread to capture audio data
+  obj->running = 1;
+  ret = pthread_create(&obj->worker, NULL, src_pcm_worker, obj);
+  if (ret != 0) {
+    printf("[%s] pthread_create failed with %d!\n", __FUNCTION__, ret);
+    return ret;
+  }
+#else
+  // create a ring buffer
+  obj->rb = (ring_buffer_t*)malloc(sizeof(ring_buffer_t));
+  size_t buffer_size = obj->per_frame * obj->chn * obj->frame_size;
+  obj->buffer = (char*)malloc(buffer_size);
+  ret = ring_buffer_init(obj->rb, buffer_size * RB_COUNT);
+  if (ret != 0) {
+    printf("[%s] ring_buffer_init failed with %d!\n", __FUNCTION__, ret);
+    return ret;
+  }
+#endif
+
   // mark as init
-  obj->init = TD_TRUE;
+  obj->init = 1;
 
   printf("[%s] src_pcm_spec init success!\n\n\n", __FUNCTION__);
 
-  return TD_SUCCESS;
+  return 0;
 }
 
 void src_pcm_destory(src_pcm_spec* obj) {
+  if (obj->init == 1) {
+    printf("[%s] src_pcm_spec already destory!\n", __FUNCTION__);
+    return;
+  }
+
+  obj->init = 0;
+
+#ifdef UAC_SRC_SINK
+  // stop worker thread
+  obj->running = 0;
+  pthread_join(obj->worker, NULL);
+
   // stop ai
   comm_audio_stop_ai(obj->ai_dev, obj->chn, TD_FALSE, TD_TRUE);
 
   // destory module
   comm_audio_exit();
+#else
+  // free resources
+  if (obj->rb != NULL) {
+    ring_buffer_release(obj->rb);
+    free(obj->rb);
+    free(obj->buffer);
+    obj->buffer = NULL;
+  }  
+#endif  
 
   printf("[%s] src_pcm_spec destory success!\n\n\n", __FUNCTION__);
 }
 
+#ifdef UAC_SRC_SINK
 td_s32 src_pcm_read_frame(src_pcm_spec* obj, src_pcm_item* item) {
   td_s32 ret;
 
@@ -160,4 +305,29 @@ void src_pcm_release_frame(src_pcm_spec* obj, src_pcm_item* item) {
   }
 
   // printf("[%s] ai(%d,%d) release frame\n", __FUNCTION__, obj->ai_dev, item->chn);
+}
+#endif
+
+int src_pcm_read_buffer(src_pcm_spec* obj, char* buffer, size_t size) {
+  return ring_buffer_read(obj->rb, buffer, size);
+}
+
+int src_pcm_write_buffer(src_pcm_spec* obj, char** chn_bufs, int chn) {
+  // interleave the frame data
+  int offset = 0;
+  int size_per_sample = obj->frame_size;  // bytes per sample
+  int samples = obj->per_frame;           // samples
+  for (int i = 0; i < samples; i++) {
+    for (int j = 0; j < obj->chn; j++) {
+      char* data = chn_bufs[j];
+      offset = i * obj->chn * size_per_sample + j * size_per_sample;
+      memcpy(obj->buffer + offset, data + i * size_per_sample, size_per_sample);
+    }
+  }
+
+  // src_hops_save_to_file1(obj->buffer, samples * obj->chn * size_per_sample);
+
+  // write to ring buffer
+  return ring_buffer_write(obj->rb, obj->buffer,
+                           samples * obj->chn * size_per_sample, 0);
 }
