@@ -211,11 +211,7 @@ target_link_libraries(
     ${LIBCONFIG}/lib/libconfig.so
     ${FFTW3F}/lib/libfftw3f.so
     ${FFTW3F}/lib/libfftw3f_threads.so
-    ${PULSEAUDIO}/lib/libpulse-simple.so
-    ${PULSEAUDIO}/lib/libpulse.so
-    ${PULSEAUDIO}/lib/pulseaudio/libpulsecommon-17.0.so
     ${ALSA}/lib/libasound.so
-    ${SNDFILE}/lib/libsndfile.so
 
     m
 
@@ -229,7 +225,6 @@ target_include_directories(
     ${LIBCONFIG}/include
     ${ALSA}/include
     ${FFTW3F}/include
-    ${PULSEAUDIO}/include
 )
 
 # app
@@ -251,85 +246,87 @@ target_link_libraries(
     odas
 )
 
-add_library(
-    odascore
-    SHARED
+if (ENABLE_UAC)
+    add_library(
+        odascore
+        SHARED
 
-    demo/odascore/odascore.c
-    demo/odascore/odascore.h
+        demo/odascore/odascore.c
+        demo/odascore/odascore.h
 
-    demo/odaslive/configs.c
-    demo/odaslive/objects.c
-    demo/odaslive/parameters.c
-    demo/odaslive/profiler.c
-    demo/odaslive/threads.c
-)
+        demo/odaslive/configs.c
+        demo/odaslive/objects.c
+        demo/odaslive/parameters.c
+        demo/odaslive/profiler.c
+        demo/odaslive/threads.c
+    )
 
-target_link_libraries(
-    odascore
-    PRIVATE
+    target_link_libraries(
+        odascore
+        PRIVATE
 
-    odas
-)
+        odas
+    )
+    
+    # uac example 
+    add_executable(
+        uac
 
-# uac example 
-add_executable(
-    uac
+        demo/odascore/uac.c
+        demo/odascore/comm_audio.c
+        demo/odascore/comm_audio.h
+    )
 
-    demo/odascore/uac.c
-    demo/odascore/comm_audio.c
-    demo/odascore/comm_audio.h
-)
-
-target_include_directories(
-    uac
-    PUBLIC
-
-    # Hi3519
-    ${HI3519_ROOT}/include
-    ${ALSA}/include
-)
-
-target_link_libraries(
-    uac
-    PUBLIC
-
-    odascore
-
-    ${HI3519_ROOT}/lib/libsecurec.so
-    ${HI3519_ROOT}/lib/libmp3_enc.so
-    ${HI3519_ROOT}/lib/libmp3_lame.so
-    ${HI3519_ROOT}/lib/libmp3_dec.so
-    ${HI3519_ROOT}/lib/libvoice_engine.so
-    ${HI3519_ROOT}/lib/libupvqe.so
-    ${HI3519_ROOT}/lib/libdnvqe.so
-
-    # mpi
-    ${HI3519_ROOT}/lib/libhi_mpi_audio.so
-    ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
-    ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
-    ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
-
-    # aac
-    ${HI3519_ROOT}/lib/libaac_comm.so
-    ${HI3519_ROOT}/lib/libaac_dec.so
-    ${HI3519_ROOT}/lib/libaac_enc.so
-    ${HI3519_ROOT}/lib/libaac_sbr_dec.so
-    ${HI3519_ROOT}/lib/libaac_sbr_enc.so
-
-    # opus
-    ${HI3519_ROOT}/lib/libopus.so
-
-    ${ALSA}/lib/libasound.so
-)
-
-target_compile_definitions(
+    target_include_directories(
         uac
         PUBLIC
 
-        OT_ACODEC_TYPE_INNER
-        USE_DMIC
-)
+        # Hi3519
+        ${HI3519_ROOT}/include
+        ${ALSA}/include
+    )
+
+    target_link_libraries(
+        uac
+        PUBLIC
+
+        odascore
+
+        ${HI3519_ROOT}/lib/libsecurec.so
+        ${HI3519_ROOT}/lib/libmp3_enc.so
+        ${HI3519_ROOT}/lib/libmp3_lame.so
+        ${HI3519_ROOT}/lib/libmp3_dec.so
+        ${HI3519_ROOT}/lib/libvoice_engine.so
+        ${HI3519_ROOT}/lib/libupvqe.so
+        ${HI3519_ROOT}/lib/libdnvqe.so
+
+        # mpi
+        ${HI3519_ROOT}/lib/libhi_mpi_audio.so
+        ${HI3519_ROOT}/lib/libhi_mpi_audio_adp.so
+        ${HI3519_ROOT}/lib/libhi_mpi_sysbind.so
+        ${HI3519_ROOT}/lib/libhi_mpi_sysmem.so
+
+        # aac
+        ${HI3519_ROOT}/lib/libaac_comm.so
+        ${HI3519_ROOT}/lib/libaac_dec.so
+        ${HI3519_ROOT}/lib/libaac_enc.so
+        ${HI3519_ROOT}/lib/libaac_sbr_dec.so
+        ${HI3519_ROOT}/lib/libaac_sbr_enc.so
+
+        # opus
+        ${HI3519_ROOT}/lib/libopus.so
+
+        ${ALSA}/lib/libasound.so
+    )
+
+    target_compile_definitions(
+            uac
+            PUBLIC
+
+            OT_ACODEC_TYPE_INNER
+            USE_DMIC
+    )
+endif()
 # end of uac example
 
 if (NOT ODAS_DISABLE_INSTALL)

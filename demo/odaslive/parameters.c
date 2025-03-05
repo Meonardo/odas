@@ -125,7 +125,6 @@ src_hops_cfg *parameters_src_hops_mics_config(const char *fileConfig) {
   unsigned int tmpInt2;
 
   cfg = src_hops_cfg_construct();
-  cfg->channel_map = NULL;  // Only used in pulseaudio mode
 
   // +----------------------------------------------------------+
   // | Format                                                   |
@@ -174,14 +173,6 @@ src_hops_cfg *parameters_src_hops_mics_config(const char *fileConfig) {
 
     free((void *)tmpStr2);
 
-  } else if (strcmp(tmpStr1, "pulseaudio") == 0) {
-    tmpStr2 = parameters_lookup_string(fileConfig, "raw.interface.source");
-
-    cfg->interface = interface_construct_pulseaudio(tmpStr2);
-    cfg->channel_map = parameters_pa_channel_map_config(fileConfig);
-
-    free((void *)tmpStr2);
-
   } else if (strcmp(tmpStr1, "uacin") == 0) {
     tmpStr2 = parameters_lookup_string(fileConfig, "raw.interface.source");
 
@@ -224,42 +215,6 @@ msg_hops_cfg *parameters_msg_hops_mics_raw_config(const char *fileConfig) {
   cfg->nChannels = parameters_lookup_int(fileConfig, "raw.nChannels");
 
   return cfg;
-}
-
-pa_channel_map *parameters_pa_channel_map_config(const char *fileConfig) {
-  unsigned int nChannels =
-      parameters_count(fileConfig, "raw.interface.channelmap");
-  pa_channel_map *map = (pa_channel_map *)malloc(sizeof(pa_channel_map));
-  pa_channel_map_init(map);
-  map->channels = 0;
-
-  char *tmpStr1 = (char *)malloc(sizeof(char) * 1024);
-  for (unsigned int iChannel = 0; iChannel < nChannels; ++iChannel) {
-    sprintf(tmpStr1, "raw.interface.channelmap.[%u]", iChannel);
-    char *channel = parameters_lookup_string(fileConfig, tmpStr1);
-    if (((map->map[iChannel] = pa_channel_position_from_string(channel)) ==
-         PA_CHANNEL_POSITION_INVALID)) {
-      printf("Invalid channel position: %s\n", channel);
-      exit(EXIT_FAILURE);
-    }
-    ++(map->channels);
-    free((void *)channel);
-  }
-  free((void *)tmpStr1);
-
-  if (map->channels != parameters_lookup_int(fileConfig, "raw.nChannels")) {
-    printf(
-        "Configuration error: raw.interface.channelmap length does not match "
-        "raw.nChannels\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if (!pa_channel_map_valid(map)) {
-    printf("Invalid channel map\n");
-    exit(EXIT_FAILURE);
-  }
-
-  return map;
 }
 
 mod_mapping_cfg *parameters_mod_mapping_mics_config(const char *fileConfig) {

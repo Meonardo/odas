@@ -19,8 +19,6 @@ src_hops_cfg* parameters_src_hops_mics_config(const char* fileConfig);
 
 msg_hops_cfg* parameters_msg_hops_mics_raw_config(const char* fileConfig);
 
-pa_channel_map* parameters_pa_channel_map_config(const char* fileConfig);
-
 mod_mapping_cfg* parameters_mod_mapping_mics_config(const char* fileConfig);
 
 msg_hops_cfg* parameters_msg_hops_mics_map_config(const char* fileConfig);

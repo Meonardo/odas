@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <odas/odas.h>
 #include <signal.h>
+#include <sys/time.h>
 #include <time.h>
 
 #include "configs.h"
@@ -123,8 +124,9 @@ int main(int argc, char *argv[]) {
   }
 
   if (file_config == NULL) {
-    printf("Missing configuration file.\n");
-    exit(EXIT_FAILURE);
+    // printf("Missing configuration file.\n");
+    // exit(EXIT_FAILURE);
+    file_config = "./3308_6_mic_array.cfg";
   }
 
   // +------------------------------------------------------+
@@ -180,12 +182,32 @@ int main(int argc, char *argv[]) {
     // | Processing                                       |
     // +--------------------------------------------------+
 
+    {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      struct tm *tm_info = localtime(&tv.tv_sec);
+      char buffer[64];
+      strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+      printf("Processing begin@ %s.%03ld\n", buffer, tv.tv_usec / 1000);
+    }
+    
     if (verbose == 0x01) printf("| + Processing....................... \n\n\n");
     fflush(stdout);
 
     threads_single_open(objs);
     stopProcess = 0;
     while ((threads_single_process(objs, prf) == 0) && (stopProcess == 0));
+
+    {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      struct tm *tm_info = localtime(&tv.tv_sec);
+      char buffer[64];
+      strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S",
+               tm_info);
+      printf("Processing end@ %s.%03ld\n", buffer, tv.tv_usec / 1000);
+    }
+
     threads_single_close(objs);
 
     if (verbose == 0x01) printf("[Done] |\n");
@@ -257,12 +279,30 @@ int main(int argc, char *argv[]) {
     // | Wait                                             |
     // +--------------------------------------------------+
 
+    {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      struct tm *tm_info = localtime(&tv.tv_sec);
+      char buffer[64];
+      strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+      printf("Processing begin@ %s.%03ld\n", buffer, tv.tv_usec / 1000);
+    }
+
     if (verbose == 0x01) printf("| + Threads running.................. ");
     fflush(stdout);
 
     threads_multiple_join(aobjs);
 
     if (verbose == 0x01) printf("[Done] |\n");
+
+    {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      struct tm *tm_info = localtime(&tv.tv_sec);
+      char buffer[64];
+      strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+      printf("Processing end@ %s.%03ld\n", buffer, tv.tv_usec / 1000);
+    }
 
     // +--------------------------------------------------+
     // | Free memory                                      |

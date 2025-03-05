@@ -32,8 +32,6 @@
 #include <alsa/asoundlib.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <pulse/error.h>
-#include <pulse/simple.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,10 +57,7 @@ typedef struct src_hops_obj {
 
   FILE *fp;
   snd_pcm_t *ch;
-  pa_simple *pa;
-  pa_sample_spec ss;
   src_pcm_spec sps;
-  pa_channel_map cm;
 
   struct sockaddr_in sserver;
   int sid;
@@ -79,7 +74,6 @@ typedef struct src_hops_obj {
 typedef struct src_hops_cfg {
   format_obj *format;
   interface_obj *interface;
-  pa_channel_map *channel_map;
 
 } src_hops_cfg;
 
@@ -98,8 +92,6 @@ void src_hops_open_interface_file(src_hops_obj *obj);
 
 void src_hops_open_interface_soundcard(src_hops_obj *obj);
 
-void src_hops_open_interface_pulseaudio(src_hops_obj *obj);
-
 void src_hops_open_interface_uac_in(src_hops_obj *obj);
 
 void src_hops_open_interface_socket(src_hops_obj *obj);
@@ -109,8 +101,6 @@ void src_hops_close(src_hops_obj *obj);
 void src_hops_close_interface_file(src_hops_obj *obj);
 
 void src_hops_close_interface_soundcard(src_hops_obj *obj);
-
-void src_hops_close_interface_pulseaudio(src_hops_obj *obj);
 
 void src_hops_close_interface_uac_in(src_hops_obj *obj);
 
@@ -123,8 +113,6 @@ int src_hops_process_interface_file(src_hops_obj *obj);
 int src_hops_process_interface_soundcard(src_hops_obj *obj);
 
 int src_hops_process_interface_socket(src_hops_obj *obj);
-
-int src_hops_process_interface_pulseaudio(src_hops_obj *obj);
 
 int src_hops_process_interface_uac_in(src_hops_obj *obj);
 

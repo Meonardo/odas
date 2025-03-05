@@ -1,5 +1,19 @@
 #include "source/src_pcm.h"
 
+static FILE* test_input_file = NULL;
+
+static void test_save_to_file(void* buffer, size_t len) {
+  if (test_input_file == NULL) {
+    test_input_file = fopen("/home/meonardo/bin/input.pcm", "w+");
+    if (test_input_file == NULL) {
+      printf("Cannot open file input.pcm\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  fwrite(buffer, 1, len, test_input_file);
+}
+
 int src_pcm_init(src_pcm_spec* obj) {
   if (obj->init == 1) {
     printf("[%s] src_pcm_spec already init!\n", __FUNCTION__);
@@ -62,7 +76,7 @@ int src_pcm_write_buffer(src_pcm_spec* obj, char** chn_bufs, int chn) {
     }
   }
 
-  // src_hops_save_to_file1(obj->buffer, samples * obj->chn * size_per_sample);
+  // test_save_to_file(obj->buffer, samples * obj->chn * size_per_sample);
 
   // write to ring buffer
   return ring_buffer_write(obj->rb, obj->buffer,

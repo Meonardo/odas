@@ -42,18 +42,6 @@ static void src_hops_save_to_file(src_hops_obj *obj) {
   fwrite(obj->buffer, 1, obj->bufferSize, test_input_file);
 }
 
-static void src_hops_save_to_file1(void *buffer, size_t len) {
-  if (test_input_file == NULL) {
-    test_input_file = fopen("/home/meonardo/bin/input.pcm", "w+");
-    if (test_input_file == NULL) {
-      printf("Cannot open file input.pcm\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  fwrite(buffer, 1, len, test_input_file);
-}
-
 src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
                                  const msg_hops_cfg *msg_hops_config) {
   src_hops_obj *obj;
@@ -69,14 +57,6 @@ src_hops_obj *src_hops_construct(const src_hops_cfg *src_hops_config,
 
   obj->format = format_clone(src_hops_config->format);
   obj->interface = interface_clone(src_hops_config->interface);
-  if (src_hops_config->channel_map != NULL) {
-    // Will not be null if in pulseaudio mode
-    memcpy(&obj->cm, src_hops_config->channel_map, sizeof(pa_channel_map));
-  } else if (obj->interface->type == interface_pulseaudio) {
-    // Can't be null if we are in pulseaudio mode
-    printf("Error: Pulseaudio interface requires channel map.\n");
-    exit(EXIT_FAILURE);
-  }
 
   memset(obj->bytes, 0x00, 4 * sizeof(char));
 
@@ -143,11 +123,6 @@ void src_hops_open(src_hops_obj *obj) {
 
       break;
 
-    case interface_pulseaudio:
-
-      src_hops_open_interface_pulseaudio(obj);
-
-      break;
     case interface_uac_in:
 
       src_hops_open_interface_uac_in(obj);
@@ -271,56 +246,6 @@ void src_hops_open_interface_soundcard(src_hops_obj *obj) {
   }
 }
 
-void src_hops_open_interface_pulseaudio(src_hops_obj *obj) {
-  pa_sample_format_t format;
-
-  switch (obj->format->type) {
-    case format_binary_int08:
-
-      format = PA_SAMPLE_U8;
-
-      break;
-
-    case format_binary_int16:
-
-      format = PA_SAMPLE_S16LE;
-
-      break;
-
-    case format_binary_int24:
-
-      format = PA_SAMPLE_S24LE;
-
-      break;
-
-    case format_binary_int32:
-
-      format = PA_SAMPLE_S32LE;
-
-      break;
-
-    default:
-
-      printf("Source hops: Invalid format.\n");
-      exit(EXIT_FAILURE);
-
-      break;
-  }
-
-  obj->ss.format = format;
-  obj->ss.rate = obj->fS;
-  obj->ss.channels = obj->nChannels;
-
-  int err;
-  if (!(obj->pa = pa_simple_new(NULL, "Odas", PA_STREAM_RECORD,
-                                obj->interface->deviceName, "record", &obj->ss,
-                                &obj->cm, NULL, &err))) {
-    printf("Source hops: Cannot open pulseaudio device %s: %s\n",
-           obj->interface->deviceName, pa_strerror(err));
-    exit(EXIT_FAILURE);
-  }
-}
-
 void src_hops_open_interface_uac_in(src_hops_obj *obj) {
   obj->sps.chn = obj->nChannels;
   obj->sps.per_frame = obj->hopSize;
@@ -379,12 +304,6 @@ void src_hops_close(src_hops_obj *obj) {
 
       break;
 
-    case interface_pulseaudio:
-
-      src_hops_close_interface_pulseaudio(obj);
-
-      break;
-
     case interface_uac_in:
 
       src_hops_close_interface_uac_in(obj);
@@ -410,10 +329,6 @@ void src_hops_close_interface_file(src_hops_obj *obj) { fclose(obj->fp); }
 
 void src_hops_close_interface_soundcard(src_hops_obj *obj) {
   snd_pcm_close(obj->ch);
-}
-
-void src_hops_close_interface_pulseaudio(src_hops_obj *obj) {
-  if (obj->pa != NULL) pa_simple_free(obj->pa);
 }
 
 void src_hops_close_interface_uac_in(src_hops_obj *obj) {
@@ -468,12 +383,6 @@ int src_hops_process(src_hops_obj *obj) {
     case interface_soundcard:
 
       rtnValue = src_hops_process_interface_soundcard(obj);
-
-      break;
-
-    case interface_pulseaudio:
-
-      rtnValue = src_hops_process_interface_pulseaudio(obj);
 
       break;
 
@@ -534,19 +443,6 @@ int src_hops_process_interface_soundcard(src_hops_obj *obj) {
   return rtnValue;
 }
 
-int src_hops_process_interface_pulseaudio(src_hops_obj *obj) {
-  int rtnValue;
-  int err;
-
-  if (pa_simple_read(obj->pa, obj->buffer, obj->bufferSize, &err) < 0) {
-    rtnValue = -1;
-
-  } else {
-    rtnValue = 0;
-  }
-
-  return rtnValue;
-}
 
 int src_hops_process_interface_uac_in(src_hops_obj *obj) {
   // int offset = 0;
@@ -710,9 +606,6 @@ void src_hops_cfg_destroy(src_hops_cfg *src_hops_config) {
   }
   if (src_hops_config->interface != NULL) {
     interface_destroy(src_hops_config->interface);
-  }
-  if (src_hops_config->channel_map != NULL) {
-    free((void *)src_hops_config->channel_map);
   }
 
   free((void *)src_hops_config);
