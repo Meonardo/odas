@@ -1,7 +1,6 @@
 build
 bin
 lib
-.vscode
 *.raw
 install
 
