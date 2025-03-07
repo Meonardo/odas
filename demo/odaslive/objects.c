@@ -830,7 +830,7 @@ aobjects *aobjects_construct(const configs *cfgs) {
 
   objs = (aobjects *)malloc(sizeof(aobjects));
 
-  objs->nMessages = 100;
+  objs->nMessages = 32;
 
   // +----------------------------------------------------------+
   // | Construct                                                |
@@ -1437,7 +1437,7 @@ aobjects *aobjects_construct(const configs *cfgs) {
   printf("[%s:%d] amod_mapping_enable\n", __FUNCTION__, __LINE__);
 
   amod_mapping_enable(objs->amod_mapping_mics_object);
-  amod_resample_enable(objs->amod_resample_mics_object);
+  // amod_resample_enable(objs->amod_resample_mics_object);
   // Short-Time Fourier Transform (STFT)
   amod_stft_enable(objs->amod_stft_mics_object);
 

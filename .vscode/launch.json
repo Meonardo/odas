@@ -27,7 +27,8 @@
                     "text": "handle SIGPIPE nostop"
                 }
             ],
-            // "preLaunchTask": "prelaunchtasks",
+            // "preLaunchTask": "build",
+            // "postDebugTask": "copy output files",
             "logging": {
                 "engineLogging": true,
                 "traceResponse": true,

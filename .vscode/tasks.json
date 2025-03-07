@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "build & copy",
+			"label": "build",
 			"command": "${workspaceFolder}/build.sh",
 			"group": "build",
 			"problemMatcher": [],
@@ -15,7 +15,28 @@
 			"command": "adb shell sh /userdata/amdox/bin/launch_gdbserver.sh",
 			"group": "build",
 			"problemMatcher": [],
+			"isBackground": true,
 			"detail": "launch gdbserver on 3308"
+		},
+		{
+			"type": "shell",
+			"label": "copy output files",
+			"command": "${workspaceFolder}/copy_files_to_windows.sh",
+			"group": "build",
+			"problemMatcher": [],
+			"detail": "copy output files to from 3308 to shared folder"
+		},
+		{
+			"type": "shell",
+			"label": "prelaunchtasks",
+			"dependsOn": [
+				"build",
+				"debug launch"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
 		}
 	]
 }

@@ -49,6 +49,11 @@
         "format.h": "c",
         "fifo.h": "c",
         "delay.h": "c",
-        "amsg_hops.h": "c"
+        "amsg_hops.h": "c",
+        "amod_mapping.h": "c",
+        "amod_classify.h": "c",
+        "frame2freq.h": "c",
+        "fft.h": "c",
+        "env2env.h": "c"
     }
 }
