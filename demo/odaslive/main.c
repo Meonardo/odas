@@ -81,9 +81,9 @@ int main(int argc, char *argv[]) {
   led_turn_on_mic_idx(1, 0, 128, 0);
 
   sleep(3);
-#endif  
 
   led_turn_on_mic_idx(3, 0, 128, 0);
+#endif  
 
   file_config = (char *)NULL;
   char verbose = 0x00;
