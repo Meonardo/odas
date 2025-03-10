@@ -74,6 +74,17 @@ int main(int argc, char *argv[]) {
   // | Arguments                                            |
   // +------------------------------------------------------+
 
+#if 0
+  // test led
+  led_turn_off_all();
+
+  led_turn_on_mic_idx(1, 0, 128, 0);
+
+  sleep(3);
+#endif  
+
+  led_turn_on_mic_idx(3, 0, 128, 0);
+
   file_config = (char *)NULL;
   char verbose = 0x00;
 

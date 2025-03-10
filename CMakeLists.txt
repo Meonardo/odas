@@ -44,6 +44,7 @@ set(SRC
     src/general/soundspeed.c
     src/general/spatialfilter.c
     src/general/thread.c
+    src/general/led.c
 
     src/init/combining.c
     src/init/delay.c

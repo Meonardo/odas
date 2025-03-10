@@ -54,6 +54,8 @@
         "amod_classify.h": "c",
         "frame2freq.h": "c",
         "fft.h": "c",
-        "env2env.h": "c"
+        "env2env.h": "c",
+        "msg_tracks.h": "c",
+        "led.h": "c"
     }
 }

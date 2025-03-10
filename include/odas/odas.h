@@ -68,6 +68,7 @@ extern "C" {
 #include <sink/snk_spectra.h>
 #include <sink/snk_tracks.h>
 #include <source/src_hops.h>
+#include <general/led.h>
 
 #ifdef __cplusplus
 }  // extern "C"
